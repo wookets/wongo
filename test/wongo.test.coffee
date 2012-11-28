@@ -14,7 +14,7 @@ describe 'Wongo', ->
 
   it 'should save a Mock named mint', (done) ->
     resource = {_type: 'Mock', name: 'mint'}
-    wongo.save resource, (err, doc) ->
+    wongo.save 'Mock', resource, (err, doc) ->
       if err then console.log err
       assert.ok(doc)
       assert.ok(doc._id)

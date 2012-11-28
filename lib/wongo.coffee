@@ -27,50 +27,47 @@ exports.findOne = findOne = (_type, query, callback) ->
   query ?= {}
   query.limit = 1
   find _type, query, (err, result) ->
-    if not err and result
-      result = result[0]
+    if not err and result then result = result[0]
     callback(err, result)
 
 ###
 # Return a single document based on the unique _id.
 # @return (err, doc)
 ###
-exports.findById = (_type, _id, callback) ->
+exports.findById = findById = (_type, _id, callback) ->
   findOne(_type, {where: {_id: _id}}, callback)
     
 
 ###
-# This will create or findAndUpdate a document.
+# This will create or update a document.
+# @param _type The name of the collection.
+# @param
 # @return (err, doc)
 ###
-exports.save = (resource, callback) -> 
-  Type = mongoose.model(resource._type)
+exports.save = (_type, document, callback) -> 
+  Type = mongoose.model(_type)
   
-  for own key, value of resource # normalize populated references, since it seems to not be as friendly as it should be...
-    if Type.schema.path(key)?.options?.ref # direct object reference
-      if _.isObject(value) and value._id
-        resource[key] = value._id
-    else if Type.schema.path(key)?.options?.type?[0]?.ref # array object reference
-      for item in value ? []
-        if _.isObject(item) and item._id
-          resource[key] = item._id
-
-  if resource._id # update
-    Type.findById resource._id, (err, doc) -> # TODO in teh future, let's use findAndModify
+  if document._id # update
+    update _type, {_id: document._id}, document, (err) ->
       if err then return callback(err)
-      doc[key2] = value for own key2, value of resource when key2 isnt '_id' # copy in updated properties
-      doc.save (err) ->
-        return callback(err, doc?.toObject({getters: true}))
+      findById(_type, document._id, callback) # if someone calls 'save()' return the whole document back to them, otherwise they should call update
   else # insert
-    Type.create resource, (err, doc) ->
-      return callback(err, doc?.toObject({getters: true}))
+    create(_type, document, callback)
+
+exports.create = create = (_type, document, callback) ->
+  Type = mongoose.model(_type)
+  normalize_populate(Type, document)
+  Type.create document, (err, doc) ->
+    return callback(err, doc?.toObject({getters: true}))
+
 ###
-# This will update ALL matching documents.
+# This will update ALL matching documents if you are not careful.
 # @return (err) 
 ###
-exports.update = (_type, where, values, callback) ->
+exports.update = update = (_type, where, partial_document, callback) ->
   Type = mongoose.model(_type)
-  Type.update(where, values, {multi: true}, callback)
+  normalize_populate(Type, partial_document)
+  Type.update(where, partial_document, {multi: true}, callback)
 
 
 ###
@@ -81,6 +78,15 @@ exports.clear = (_type, callback) ->
   Type = mongoose.model(_type)
   Type.remove({}, callback)
     
+# normalize potentially populated references, since default behavior seems to not be as friendly as it should be...
+normalize_populate = (Type, document) ->
+  for own key, value of document 
+    if Type.schema.path(key)?.options?.ref # direct object reference
+      if _.isObject(value) and value._id
+        document[key] = value._id
+    else if Type.schema.path(key)?.options?.type?[0]?.ref # array object reference
+      for item in value
+        if _.isObject(item) and item._id
+          document[key] = item._id
 
-  
   
