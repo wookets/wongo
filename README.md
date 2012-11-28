@@ -17,7 +17,8 @@ I use mocha. So, you should be able to run mocha in the project folder and be do
 Here is a format you can use:
 
 test/db_config.json
-{
-  "url": "mongodb://<username>:<password>@<host>:<port>/<db>"
-}
+
+    {
+    "url": "mongodb://{username}:{password}@{host}:{port}/{db}"
+    }
 
