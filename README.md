@@ -2,14 +2,19 @@
 
 I wrapper that actually unwraps a wrapper. Crazy right?
 
+Disclaimer: This project is extremely immature, but feel free to take a peek around and be critical. 
+
 # Quick Example
 
     // find example
     query = {where: {name: 'mint'}}
-    wongo.find 'Mock', query, (err, mocks) ->
-      // mocks is just the objects (uses lean())
-      done()
-
+    wongo.find 'Mock', query, (err, docs) ->
+      // docs is a raw json array of objects - i.e. it uses lean()
+    
+    // save example
+    document = {_type: 'Mock', name: 'mint'}
+    wongo.save document, (err, doc) ->
+      // doc is a raw json object
 
 
 # Why
