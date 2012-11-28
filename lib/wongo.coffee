@@ -46,28 +46,24 @@ exports.findById = (_type, _id, callback) ->
 exports.save = (resource, callback) -> 
   Type = mongoose.model(resource._type)
   
-  for own key, value of resource # normalize populated references, since it seems to be broken...
+  for own key, value of resource # normalize populated references, since it seems to not be as friendly as it should be...
     if Type.schema.path(key)?.options?.ref # direct object reference
-      resource[key] = if _.isObject(value) then value._id else value
+      if _.isObject(value) and value._id
+        resource[key] = value._id
     else if Type.schema.path(key)?.options?.type?[0]?.ref # array object reference
-      newArray = []
-      for val1 in value
-        if _.isObject(val1) then newArray.push(val1._id) else newArray.push(val1)
-      resource[key] = newArray
-  
+      for item in value ? []
+        if _.isObject(item) and item._id
+          resource[key] = item._id
+
   if resource._id # update
-    Type.findById resource._id, (err, doc) ->
+    Type.findById resource._id, (err, doc) -> # TODO in teh future, let's use findAndModify
       if err then return callback(err)
-      for own key2, value of resource # copy in new properties
-        if key2 is '_id' then continue
-        doc[key2] = value
+      doc[key2] = value for own key2, value of resource when key2 isnt '_id' # copy in updated properties
       doc.save (err) ->
-        if callback
-          return callback(err, doc?.toObject({getters: true}))
+        return callback(err, doc?.toObject({getters: true}))
   else # insert
     Type.create resource, (err, doc) ->
-      if callback
-        return callback(err, doc?.toObject({getters: true}))
+      return callback(err, doc?.toObject({getters: true}))
 ###
 # This will update ALL matching documents.
 # @return (err) 
