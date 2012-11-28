@@ -82,7 +82,9 @@ exports.update = (_type, where, values, callback) ->
 # @return (err) 
 ###
 exports.clear = (_type, callback) ->
+  console.log 'clear ' + _type
   Type = mongoose.model(_type)
+  console.log Type
   Type.remove({}, callback)
     
 
