@@ -3,7 +3,7 @@
   "description": "An unwrapper wrapper for mongoose.js",
   "main": "./lib/wongo",
   "author": "wookets",
-  "version": "0.0.7", 
+  "version": "0.0.8", 
   "repository": {
     "type": "git",
     "url": "http://github.com/wookets/wongo.git"
