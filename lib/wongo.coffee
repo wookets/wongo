@@ -8,22 +8,21 @@ _ = require 'underscore'
 exports.Schema = Schema = mongoose.Schema
 
 ###
-# Query operations
+# Return a list of documents based on query parameters.
+# @return (err, docs)
 ###
 exports.find = find = (_type, query, callback) ->
-  # validate params
-  if not _type or not _.isString(_type)
-    return callback('InvalidParameter', 'The parameter _type is required.')
-  if not query
-    return callback('InvalidParamter', 'The parameter query is required.')
-  
   Type = mongoose.model(_type)
-  mq = Type.find(query.where, query.select, {sort: query.sort, limit: query.limit, skip: query.limit})
+  mq = Type.find(query.where, query.select, {sort: query.sort, limit: query.limit, skip: query.skip})
   mq.lean()
   mq.exec (err, docs) ->
-    # add support for population
+    # TODO add support for population
     callback(err, docs)
 
+###
+# Return a single document based on query paramters.
+# @return (err, doc)
+###
 exports.findOne = findOne = (_type, query, callback) ->
   query ?= {}
   query.limit = 1
@@ -32,23 +31,22 @@ exports.findOne = findOne = (_type, query, callback) ->
       result = result[0]
     callback(err, result)
 
+###
+# Return a single document based on the unique _id.
+# @return (err, doc)
+###
 exports.findById = (_type, _id, callback) ->
   findOne(_type, {where: {_id: _id}}, callback)
     
 
 ###
-# CRUD operations
+# This will create or findAndUpdate a document.
+# @return (err, doc)
 ###
 exports.save = (resource, callback) -> 
-  # validate params
-  if not resource 
-    return callback('InvalidParameter', 'The resource must be a valid object.')
-  if not resource._type or not _.isString(resource._type)
-    return callback('InvalidParameter', 'The resource must have a valid _type before it can be saved.')
-  
   Type = mongoose.model(resource._type)
-  # normalize populated references, since it seems to be broken...
-  for own key, value of resource  
+  
+  for own key, value of resource # normalize populated references, since it seems to be broken...
     if Type.schema.path(key)?.options?.ref # direct object reference
       resource[key] = if _.isObject(value) then value._id else value
     else if Type.schema.path(key)?.options?.type?[0]?.ref # array object reference
@@ -57,10 +55,9 @@ exports.save = (resource, callback) ->
         if _.isObject(val1) then newArray.push(val1._id) else newArray.push(val1)
       resource[key] = newArray
   
-  # execute
   if resource._id # update
     Type.findById resource._id, (err, doc) ->
-      if err then return callback('ResourceNotSaved', err.message)
+      if err then return callback(err)
       for own key2, value of resource # copy in new properties
         if key2 is '_id' then continue
         doc[key2] = value
@@ -71,10 +68,23 @@ exports.save = (resource, callback) ->
     Type.create resource, (err, doc) ->
       if callback
         return callback(err, doc?.toObject({getters: true}))
-
+###
+# This will update ALL matching documents.
+# @return (err) 
+###
 exports.update = (_type, where, values, callback) ->
   Type = mongoose.model(_type)
   Type.update(where, values, {multi: true}, callback)
-  
+
+
+###
+# This will nuke the entire collection' - this method is mainly for supporting test cases
+# @return (err) 
+###
+exports.clear = (_type, callback) ->
+  Type = mongoose.model(_type)
+  Type.remove({}, callback)
+    
+
   
   

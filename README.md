@@ -10,3 +10,14 @@ This library was created because I was annoyed by the little things in mongoosej
 * The library includes a safer way to populate / depopulate certain things. It also (in the short future) has support for lean() populate queries. 
 
 
+# Running the Tests
+
+I use mocha. So, you should be able to run mocha in the project folder and be done. However, you will need to add a db_config.json file that has the db_config.url parameter in it. This file is not commited to git for obvious reasons. 
+
+Here is a format you can use:
+
+test/db_config.json
+{
+  "url": "mongodb://<username>:<password>@<host>:<port>/<db>"
+}
+
