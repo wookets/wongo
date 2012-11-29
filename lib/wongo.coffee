@@ -39,6 +39,15 @@ exports.findOne = findOne = (_type, query, callback) ->
 exports.findById = findById = (_type, _id, callback) ->
   findOne(_type, {where: {_id: _id}}, callback)
 
+# ### Count
+# @param _type - String
+# @param where - Object
+# @return (err, num) 
+exports.count = count = (_type, where, callback) ->
+  Type = mongoose.model(_type)
+  Type.count where, (err, num) ->
+    return callback(err, num)
+
 #  
 # Will save a document to the database. Save will always return the most recent document from the database
 # after it has been created or updated. 
@@ -115,7 +124,7 @@ normalize_populate = (Type, document) ->
           document[key][i] = item._id
 
 run_populate_queries = (Type, populate, docs, callback) ->
-  # TODO add populate query support?
+  if _.isString(populate) then populate = [populate] # string support
   
   async.forEach populate, (prop, nextInLoop) -> # run some async queries to populate our model
     pop_type = Type.schema.path(prop)?.options?.ref # direct object reference

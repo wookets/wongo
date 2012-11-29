@@ -70,6 +70,12 @@ describe 'Wongo', ->
       list_o_mocks = docs
       done()
   
+  it 'should count the new Mocks', (done) ->
+    wongo.count 'Mock', {}, (err, num) ->
+      assert.ok(not err)
+      assert.equal(num, 3)
+      done()
+  
   it 'should remove all the new Mocks', (done) ->
     _ids = (mock._id for mock in list_o_mocks)
     wongo.removeAll 'Mock', _ids, (err) ->
