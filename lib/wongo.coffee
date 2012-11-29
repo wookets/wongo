@@ -46,14 +46,19 @@ exports.findById = findById = (_type, _id, callback) ->
 exports.save = save = (_type, document, callback) -> 
   Type = mongoose.model(_type)
   
+  normalize_populate(Type, document)
+  
   if document._id # update
-    _id = document._id
-    delete document._id
-    update _type, {_id: _id}, document, (err) ->
+    Type.findById document._id, (err, doc) ->
       if err then return callback(err)
-      findById(_type, _id, callback) # if someone calls 'save()' return the whole document back to them, otherwise they should call update
+      for own prop, val of document # copy in new properties
+        if prop is '_id' then continue # ignore the _id property
+        doc[prop] = val
+      doc.save (err) ->
+        callback(err, doc?.toObject({getters: true}))
   else # insert
-    create(_type, document, callback)
+    Type.create document, (err, doc) ->
+      callback(err, doc?.toObject({getters: true}))
 
 #
 # Uses the save method in an async parallel fashion, but will not return until all have been saved.
@@ -70,8 +75,8 @@ exports.saveAll = saveAll = (_type, documents, callback) ->
 exports.create = create = (_type, document, callback) ->
   Type = mongoose.model(_type)
   normalize_populate(Type, document)
-  Type.create document, (err, doc) ->
-    return callback(err, doc?.toObject({getters: true}))
+  Type.create document, (err) ->
+    callback(err)
 
 exports.update = update = (_type, where, partial_document, callback) ->
   Type = mongoose.model(_type)
