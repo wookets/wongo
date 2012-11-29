@@ -3,9 +3,9 @@ async = require 'async'
 _ = require 'underscore'
 
 #
-# Easy access mongoose pass thru
+# Mongoose pass thru... these are needed to have wongo control mongoose rather than wongo + your code
 #
-exports.Schema = Schema = mongoose.Schema
+exports.mongoose = mongoose
 
 #
 # Return a list of documents based on query parameters.
@@ -95,7 +95,9 @@ exports.removeAll = removeAll = (_type, _ids, callback) ->
 exports.clear = (_type, callback) ->
   Type = mongoose.model(_type)
   Type.remove({}, callback)
-    
+
+
+
 # normalize potentially populated references, since default behavior seems to not be as friendly as it should be...
 normalize_populate = (Type, document) ->
   for own key, value of document 
@@ -107,8 +109,10 @@ normalize_populate = (Type, document) ->
         if _.isObject(item) and item._id
           document[key][i] = item._id
 
-run_populate_queries = (Type, populateArray, docs, callback) ->
-  async.forEach populateArray, (prop, nextInLoop) -> # run some async queries to populate our model
+run_populate_queries = (Type, populate, docs, callback) ->
+  # TODO add populate query support?
+  
+  async.forEach populate, (prop, nextInLoop) -> # run some async queries to populate our model
     pop_type = Type.schema.path(prop)?.options?.ref # direct object reference
     pop_type ?= Type.schema.path(prop)?.options?.type?[0]?.ref # array object reference
     
