@@ -16,8 +16,10 @@ exports.find = find = (_type, query, callback) ->
   mq = Type.find(query.where, query.select, {sort: query.sort, limit: query.limit, skip: query.skip})
   mq.lean()
   mq.exec (err, docs) ->
-    # TODO add support for population
-    callback(err, docs)
+    if query.populate # support for populate
+      run_populate_queries(Type, query.populate, docs, callback)
+    else
+      callback(err, docs)
 
 #
 # Return a single document based on query paramters.
@@ -45,9 +47,11 @@ exports.save = save = (_type, document, callback) ->
   Type = mongoose.model(_type)
   
   if document._id # update
-    update _type, {_id: document._id}, document, (err) ->
+    _id = document._id
+    delete document._id
+    update _type, {_id: _id}, document, (err) ->
       if err then return callback(err)
-      findById(_type, document._id, callback) # if someone calls 'save()' return the whole document back to them, otherwise they should call update
+      findById(_type, _id, callback) # if someone calls 'save()' return the whole document back to them, otherwise they should call update
   else # insert
     create(_type, document, callback)
 
@@ -84,10 +88,10 @@ exports.removeAll = removeAll = (_type, _ids, callback) ->
     remove(_type, _id, nextInLoop)
   , callback
 
-###
+#
 # This will nuke the entire collection' - this method is mainly for supporting test cases
 # @return (err) 
-###
+#
 exports.clear = (_type, callback) ->
   Type = mongoose.model(_type)
   Type.remove({}, callback)
@@ -99,8 +103,40 @@ normalize_populate = (Type, document) ->
       if _.isObject(value) and value._id
         document[key] = value._id
     else if Type.schema.path(key)?.options?.type?[0]?.ref # array object reference
-      for item in value
+      for item, i in value
         if _.isObject(item) and item._id
-          document[key] = item._id
+          document[key][i] = item._id
 
+run_populate_queries = (Type, populateArray, docs, callback) ->
+  async.forEach populateArray, (prop, nextInLoop) -> # run some async queries to populate our model
+    pop_type = Type.schema.path(prop)?.options?.ref # direct object reference
+    pop_type ?= Type.schema.path(prop)?.options?.type?[0]?.ref # array object reference
+    
+    # we need to pull out the _id from each doc that was returned
+    _ids = []
+    for doc in docs
+      if _.isArray(doc[prop])
+        _ids = _.union(doc[prop], _ids)
+      else 
+        _ids.push(doc[prop])
+    
+    # we need to query for each pop type based on assembled _ids
+    find pop_type, {where: {_id: {$in: _ids}}}, (err, pop_docs) ->
+      if err then return nextInLoop(err)
+    
+      for doc in docs # assign back to doc 
+        for pop_doc in pop_docs
+          if _.isArray(doc[prop])
+            for item, i in doc[prop]
+              if String(pop_doc._id) is String(item)
+                doc[prop][i] = pop_doc
+          else
+            if String(pop_doc._id) is String(doc[prop])
+              doc[prop] = pop_doc
+      nextInLoop()
+      
+  , (err) ->
+    callback(err, docs)
+  
+  
   

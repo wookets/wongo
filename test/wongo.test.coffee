@@ -1,4 +1,5 @@
 assert = require 'assert'
+async = require 'async'
 
 wongo = require '../lib/wongo'
 
@@ -9,7 +10,10 @@ describe 'Wongo', ->
   mock1 = null
 
   it 'should start with a fresh database', (done) -> 
-    wongo.clear 'Mock', (err, result) -> # this will take a while, because mongoose will still be setting up the db connection
+    async.forEach ['Mock', 'MockChild', 'MockParent'], (_type, nextInLoop) ->
+      wongo.clear(_type, nextInLoop)
+    , (err) ->
+      assert.ok(not err)
       done()
 
   it 'should save a Mock named mint', (done) ->
@@ -79,6 +83,57 @@ describe 'Wongo', ->
       assert.equal(mocks.length, 0)
       done()
       
-  it 'should cleanup the database', (done) ->
-    wongo.clear 'Mock', (err, result) -> # end with a fresh db
+  parent_mock = {name: 'parent'}
+  child_mock = {name: 'child'}
+  child2_mock = {name: 'child2'}
+  
+  it 'should save a parent and two children', (done) ->
+    wongo.save 'MockParent', parent_mock, (err, doc) ->
+      parent_mock = doc
+      child_mock.parent = parent_mock
+      child2_mock.parent = parent_mock
+      wongo.saveAll 'MockChild', [child_mock, child2_mock], (err, children) ->
+        for child in children
+          if child.name is 'child'
+            child_mock = child
+          else
+            child2_mock = child
+        done()
+  
+  it 'should populate the parent on a child', (done) -> # singular reference populate
+    wongo.find 'MockChild', {populate: ['parent']}, (err, docs) ->
+      assert.ok(docs)
+      assert.equal(docs.length, 2)
+      for doc in docs
+        assert.ok(doc.parent)
+        assert.ok(doc.parent._id)
+      done() 
+    
+  it 'should add the children to the parent', (done) ->
+    parent_mock.children ?= []
+    parent_mock.children.push(child_mock)
+    parent_mock.children.push(child2_mock)
+    wongo.save 'MockParent', parent_mock, (err, doc) ->
+      assert.ok(doc)
+      assert.ok(doc.children)
+      assert.equal(doc.children.length, 2)
+      done()
+  
+  it 'should populate the children on the parent', (done) -> # array based populate
+    wongo.findOne 'MockParent', {populate: ['children']}, (err, doc) ->
+      assert.ok(doc)
+      assert.ok(doc.children)
+      assert.equal(doc.children.length, 2)
+      for child in doc.children
+        assert.ok(child._id)
+      done()
+  
+  it 'should add a third child object after populate', (done) ->
+    done()
+      
+  it 'should cleanup the database', (done) -> 
+    async.forEach ['Mock', 'MockChild', 'MockParent'], (_type, nextInLoop) ->
+      wongo.clear(_type, nextInLoop)
+    , (err) ->
+      assert.ok(not err)
       done()

@@ -11,29 +11,17 @@ mongoose.connect(db_config.url) # establish a database connection
 Mock = new Schema
   _type: {type: String, default: 'Mock', required: true}
   name: String
-  age: Number
-  description: String
-  parent: {type: ObjectId, ref: 'MockParent'}
-  any: {} 
 mongoose.model 'Mock', Mock
 
 MockParent = new Schema
   _type: {type: String, default: 'MockParent', required: true}
   name: String
-  children: [{type: ObjectId, ref: 'Mock'}]
+  children: [{type: ObjectId, ref: 'MockChild'}]
 mongoose.model 'MockParent', MockParent
 
-MockEmbed = new Schema
-  _type: {type: String, default: 'MockEmbed', required: true}
-  name: String 
-  embed: 
-    name: String 
-    children: [
-      name: String 
-    ]
-  embeds: [
-    name: String 
-    child: 
-      name: String 
-  ]
-mongoose.model 'MockEmbed', MockEmbed
+MockChild = new Schema
+  _type: {type: String, default: 'MockChild', require: true}
+  name: String
+  parent: {type: ObjectId, ref: 'MockParent'}
+mongoose.model 'MockChild', MockChild
+
