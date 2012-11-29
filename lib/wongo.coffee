@@ -2,15 +2,15 @@ mongoose = require 'mongoose'
 async = require 'async'
 _ = require 'underscore'
 
-###
+#
 # Easy access mongoose pass thru
-###
+#
 exports.Schema = Schema = mongoose.Schema
 
-###
+#
 # Return a list of documents based on query parameters.
 # @return (err, docs)
-###
+#
 exports.find = find = (_type, query, callback) ->
   Type = mongoose.model(_type)
   mq = Type.find(query.where, query.select, {sort: query.sort, limit: query.limit, skip: query.skip})
@@ -19,10 +19,10 @@ exports.find = find = (_type, query, callback) ->
     # TODO add support for population
     callback(err, docs)
 
-###
+#
 # Return a single document based on query paramters.
 # @return (err, doc)
-###
+#
 exports.findOne = findOne = (_type, query, callback) ->
   query ?= {}
   query.limit = 1
@@ -30,21 +30,18 @@ exports.findOne = findOne = (_type, query, callback) ->
     if not err and result then result = result[0]
     callback(err, result)
 
-###
+#
 # Return a single document based on the unique _id.
 # @return (err, doc)
-###
+#
 exports.findById = findById = (_type, _id, callback) ->
   findOne(_type, {where: {_id: _id}}, callback)
-    
 
-###
-# This will create or update a document.
-# @param _type The name of the collection.
-# @param
-# @return (err, doc)
-###
-exports.save = (_type, document, callback) -> 
+#  
+# Will save a document to the database. Save will always return the most recent document from the database
+# after it has been created or updated. 
+#
+exports.save = save = (_type, document, callback) -> 
   Type = mongoose.model(_type)
   
   if document._id # update
@@ -54,21 +51,38 @@ exports.save = (_type, document, callback) ->
   else # insert
     create(_type, document, callback)
 
+#
+# Uses the save method in an async parallel fashion, but will not return until all have been saved.
+#
+exports.saveAll = saveAll = (_type, documents, callback) ->
+  saved_docs = []
+  async.forEach documents, (document, nextInLoop) ->
+    save _type, document, (err, doc) ->
+      saved_docs.push(doc)
+      nextInLoop(err)
+  , (err) ->
+    callback(err, saved_docs)
+
 exports.create = create = (_type, document, callback) ->
   Type = mongoose.model(_type)
   normalize_populate(Type, document)
   Type.create document, (err, doc) ->
     return callback(err, doc?.toObject({getters: true}))
 
-###
-# This will update ALL matching documents if you are not careful.
-# @return (err) 
-###
 exports.update = update = (_type, where, partial_document, callback) ->
   Type = mongoose.model(_type)
   normalize_populate(Type, partial_document)
   Type.update(where, partial_document, {multi: true}, callback)
+  
 
+exports.remove = remove = (_type, _id, callback) ->
+  Type = mongoose.model(_type)
+  Type.findByIdAndRemove(_id, callback)  
+
+exports.removeAll = removeAll = (_type, _ids, callback) ->
+  async.forEach _ids, (_id, nextInLoop) ->
+    remove(_type, _id, nextInLoop)
+  , callback
 
 ###
 # This will nuke the entire collection' - this method is mainly for supporting test cases

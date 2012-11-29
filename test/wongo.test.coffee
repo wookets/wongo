@@ -52,11 +52,33 @@ describe 'Wongo', ->
         assert.equal(mock.name, 'minty')
         done()
 
-#   it 'should delete the Mock1', (done) ->
-#     wongo.remove mock1, (err) ->
-#       assert.ok(not err)
-#       done()
-#       
+  it 'should remove the Mock1', (done) ->
+    wongo.remove 'Mock', mock1._id, (err) ->
+      assert.ok(not err)
+      done()
+      
+  list_o_mocks = [{name: 'Larry'}, {name: 'Curly'}, {name: 'Moe'}]
+  
+  it 'should save all the new Mocks', (done) ->
+    wongo.saveAll 'Mock', list_o_mocks, (err, docs) ->
+      assert.ok(docs)
+      assert.ok(docs.length, 3)
+      list_o_mocks = docs
+      done()
+  
+  it 'should remove all the new Mocks', (done) ->
+    _ids = (mock._id for mock in list_o_mocks)
+    wongo.removeAll 'Mock', _ids, (err) ->
+      assert.ok(not err)
+      done()
+      
+  it 'should verify all the new Mocks were removed', (done) ->
+    wongo.find 'Mock', {}, (err, mocks) ->
+      assert.ok(not err)
+      assert.ok(mocks)
+      assert.equal(mocks.length, 0)
+      done()
+      
   it 'should cleanup the database', (done) ->
     wongo.clear 'Mock', (err, result) -> # end with a fresh db
       done()
