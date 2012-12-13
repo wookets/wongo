@@ -1,27 +1,34 @@
 wongo = require '../lib/wongo'
 
 Schema = wongo.mongoose.Schema
-ObjectId = Schema.ObjectId
+ObjectId = wongo.ObjectId
 
 db_config = require './db_config.json' # read in your personal database settings
-wongo.mongoose.connect(db_config.url) # establish a database connection
+wongo.connect(db_config.url) # establish a database connection
 
 
 # add in Mock models that we can use to test against  
-Mock = new Schema
-  _type: {type: String, default: 'Mock', required: true}
-  name: String
-wongo.mongoose.model('Mock', Mock)
+Mock = wongo.schema 'Mock', 
+  fields: 
+    name: String
+  
+  #plugins: []
+  
+#   hooks: 
+#     beforeSave: (document, next) ->
+#       console.log 'saving ' + document
+#       next()
+#     
+#     afterSave: (document, next) ->
+#     
 
-MockParent = new Schema
-  _type: {type: String, default: 'MockParent', required: true}
-  name: String
-  children: [{type: ObjectId, ref: 'MockChild'}]
-wongo.mongoose.model('MockParent', MockParent)
+MockParent = wongo.schema 'MockParent',
+  fields: 
+    name: String
+    children: [{type: ObjectId, ref: 'MockChild'}]
 
-MockChild = new Schema
-  _type: {type: String, default: 'MockChild', require: true}
-  name: String
-  parent: {type: ObjectId, ref: 'MockParent'}
-wongo.mongoose.model('MockChild', MockChild)
+MockChild = wongo.schema 'MockChild',
+  fields: 
+    name: String
+    parent: {type: ObjectId, ref: 'MockParent'}
 

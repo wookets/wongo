@@ -1,11 +1,26 @@
-mongoose = require 'mongoose'
-async = require 'async'
 _ = require 'underscore'
+async = require 'async'
+mongoose = require 'mongoose'
 
 #
 # Mongoose pass thru... these are needed to have wongo control mongoose rather than wongo + your code
 #
 exports.mongoose = mongoose
+exports.ObjectId = mongoose.Schema.ObjectId
+
+#
+# Mongoose connect
+exports.connect = (url) ->
+  mongoose.connect(url)
+
+# 
+# Mongoose schema replacement
+exports.schema = (_type, wschema) ->
+  wschema.fields._type = {type: String, default: _type, required: true}
+  Schema = new mongoose.Schema(wschema.fields)
+  # hooks
+  # 
+  mongoose.model(_type, Schema)
 
 #
 # Return a list of documents based on query parameters.
