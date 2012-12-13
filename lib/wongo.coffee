@@ -18,8 +18,12 @@ exports.connect = (url) ->
 exports.schema = (_type, wschema) ->
   wschema.fields._type = {type: String, default: _type, required: true}
   Schema = new mongoose.Schema(wschema.fields)
+  
   # hooks
-  # 
+  
+  for own name, plugin of wschema.plugins ? {} # plugins
+    if _.isArray(plugin) then Schema.plugin(plugin[0], plugin[1]) else Schema.plugin(plugin)
+    
   mongoose.model(_type, Schema)
 
 #

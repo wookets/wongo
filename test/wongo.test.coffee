@@ -10,11 +10,7 @@ describe 'Wongo', ->
   mock1 = null
 
   it 'should start with a fresh database', (done) -> 
-    async.forEach ['Mock', 'MockChild', 'MockParent'], (_type, nextInLoop) ->
-      wongo.clear(_type, nextInLoop)
-    , (err) ->
-      assert.ok(not err)
-      done()
+    wongo.clear('Mock', done)
 
   it 'should save a Mock named mint', (done) ->
     resource = {_type: 'Mock', name: 'mint'}
@@ -94,11 +90,11 @@ describe 'Wongo', ->
   child2_mock = {name: 'child2'}
   
   it 'should save a parent and two children', (done) ->
-    wongo.save 'MockParent', parent_mock, (err, doc) ->
+    wongo.save 'Mock', parent_mock, (err, doc) ->
       parent_mock = doc
       child_mock.parent = parent_mock
       child2_mock.parent = parent_mock
-      wongo.saveAll 'MockChild', [child_mock, child2_mock], (err, children) ->
+      wongo.saveAll 'Mock', [child_mock, child2_mock], (err, children) ->
         for child in children
           if child.name is 'child'
             child_mock = child
@@ -107,7 +103,7 @@ describe 'Wongo', ->
         done()
   
   it 'should populate the parent on a child', (done) -> # singular reference populate
-    wongo.find 'MockChild', {populate: ['parent']}, (err, docs) ->
+    wongo.find 'Mock', {where: {_id: {$in: [child_mock._id, child2_mock._id]}}, populate: ['parent']}, (err, docs) ->
       assert.ok(docs)
       assert.equal(docs.length, 2)
       for doc in docs
@@ -119,14 +115,14 @@ describe 'Wongo', ->
     parent_mock.children ?= []
     parent_mock.children.push(child_mock)
     parent_mock.children.push(child2_mock)
-    wongo.save 'MockParent', parent_mock, (err, doc) ->
+    wongo.save 'Mock', parent_mock, (err, doc) ->
       assert.ok(doc)
       assert.ok(doc.children)
       assert.equal(doc.children.length, 2)
       done()
   
   it 'should populate the children on the parent', (done) -> # array based populate
-    wongo.findOne 'MockParent', {populate: ['children']}, (err, doc) ->
+    wongo.findOne 'Mock', {where: {_id: parent_mock._id}, populate: ['children']}, (err, doc) ->
       assert.ok(doc)
       assert.ok(doc.children)
       assert.equal(doc.children.length, 2)
@@ -136,10 +132,14 @@ describe 'Wongo', ->
   
   it 'should add a third child object after populate', (done) ->
     done()
-      
-  it 'should cleanup the database', (done) -> 
-    async.forEach ['Mock', 'MockChild', 'MockParent'], (_type, nextInLoop) ->
-      wongo.clear(_type, nextInLoop)
-    , (err) ->
-      assert.ok(not err)
+  
+  mockp = {name: 'plugin', woof: 'woofer', meow: 'cat'}
+  
+  it 'should make sure plugin1 and plugin2 are added to schema', (done) ->
+    wongo.save 'Mock', mockp, (err, doc) ->
+      assert.equal(doc.woof, 'woofer')
+      assert.equal(doc.meow, 'cat')
       done()
+    
+  it 'should cleanup the database', (done) -> 
+    wongo.clear('Mock', done)
