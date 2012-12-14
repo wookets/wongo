@@ -25,6 +25,8 @@ Mock = wongo.schema 'Mock',
     afterCreate: {type: String, default: 'not_changed'}
     beforeUpdate: {type: String, default: 'not_changed'}
     afterUpdate: {type: String, default: 'not_changed'}
+    beforeRemove: {type: String, default: 'not_changed'}
+    afterRemove: {type: String, default: 'not_changed'}
   
   plugins: 
     'example1': plugin_example
@@ -45,6 +47,7 @@ Mock = wongo.schema 'Mock',
     
     afterCreate: (document, next) ->
       document.afterCreate = 'changed'
+      next()
       
     beforeUpdate: (document, next) ->
       document.beforeUpdate = 'changed'
@@ -52,3 +55,11 @@ Mock = wongo.schema 'Mock',
     
     afterUpdate: (document, next) ->
       document.afterUpdate = 'changed'
+      next()
+    
+    beforeRemove: (_id, next) ->
+      next()
+    
+    afterRemove: (_id, next) ->
+      next()
+      

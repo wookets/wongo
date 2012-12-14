@@ -122,7 +122,22 @@ exports.saveAll = saveAll = (_type, documents, callback) ->
 exports.create = create = (_type, document, callback) ->
   Type = mongoose.model(_type)
   normalize_populate(Type, document)
-  Type.create document, (err) ->
+  saved_document = null
+  async.series [
+    (next) -> # call before create
+      if not Type.beforeCreate then return next()
+      Type.beforeCreate(document, next)
+    
+    (next) -> # call remove
+      Type.create document, (err, doc) ->
+        saved_document = doc?.toObject({getters: true})
+        next(err)
+      
+    (next) -> # call after remove
+      if not Type.afterCreate then return next()
+      Type.afterCreate(saved_document, next)
+  
+  ], (err) ->
     callback(err)
 
 exports.update = update = (_type, where, partial_document, callback) ->
@@ -133,7 +148,23 @@ exports.update = update = (_type, where, partial_document, callback) ->
 
 exports.remove = remove = (_type, _id, callback) ->
   Type = mongoose.model(_type)
-  Type.findByIdAndRemove(_id, callback)  
+  
+  async.series [
+    (next) -> # call before remove
+      if not Type.beforeRemove then return next()
+      Type.beforeRemove(_id, next)
+    
+    (next) -> # call remove
+      Type.findByIdAndRemove(_id, next)
+      
+    (next) -> # call after remove
+      if not Type.afterRemove then return next()
+      Type.afterRemove(_id, next)
+    
+  ], (err) ->
+    callback(err)
+  
+  
 
 exports.removeAll = removeAll = (_type, _ids, callback) ->
   async.forEach _ids, (_id, nextInLoop) ->
