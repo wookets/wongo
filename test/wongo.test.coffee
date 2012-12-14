@@ -13,7 +13,7 @@ describe 'Wongo', ->
     wongo.clear('Mock', done)
 
   it 'should save a Mock named mint', (done) ->
-    resource = {_type: 'Mock', name: 'mint'}
+    resource = {name: 'mint'}
     wongo.save 'Mock', resource, (err, doc) ->
       if err then console.log err
       assert.ok(doc)
@@ -134,11 +134,17 @@ describe 'Wongo', ->
     done()
   
   mockp = {name: 'plugin', woof: 'woofer', meow: 'cat'}
-  
   it 'should make sure plugin1 and plugin2 are added to schema', (done) ->
     wongo.save 'Mock', mockp, (err, doc) ->
       assert.equal(doc.woof, 'woofer')
       assert.equal(doc.meow, 'cat')
+      done()
+      
+  mockh = {name: 'hook'}
+  it 'should make sure hooks fire', (done) ->
+    wongo.save 'Mock', mockh, (err, doc) ->
+      assert.equal(doc.beforeSave, 'changed')
+      assert.equal(doc.afterSave, 'changed')
       done()
     
   it 'should cleanup the database', (done) -> 

@@ -19,15 +19,36 @@ Mock = wongo.schema 'Mock',
     name: String
     children: [{type: ObjectId, ref: 'Mock'}]
     parent: {type: ObjectId, ref: 'Mock'}
+    beforeSave: {type: String, default: 'not_changed'}
+    afterSave: {type: String, default: 'not_changed'}
+    beforeCreate: {type: String, default: 'not_changed'}
+    afterCreate: {type: String, default: 'not_changed'}
+    beforeUpdate: {type: String, default: 'not_changed'}
+    afterUpdate: {type: String, default: 'not_changed'}
   
   plugins: 
     'example1': plugin_example
     'example2': [plugin_example, {property: 'meow'}]
     
-#   hooks: 
-#     beforeSave: (document, next) ->
-#       console.log 'saving ' + document
-#       next()
-#     
-#     afterSave: (document, next) ->
-#     
+  hooks: 
+    beforeSave: (document, next) ->
+      document.beforeSave = 'changed'
+      next()
+    
+    afterSave: (document, next) ->
+      document.afterSave = 'changed'
+      next()
+
+    beforeCreate: (document, next) ->
+      document.beforeCreate = 'changed'
+      next()
+    
+    afterCreate: (document, next) ->
+      document.afterCreate = 'changed'
+      
+    beforeUpdate: (document, next) ->
+      document.beforeUpdate = 'changed'
+      next()
+    
+    afterUpdate: (document, next) ->
+      document.afterUpdate = 'changed'

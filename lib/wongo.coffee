@@ -20,6 +20,8 @@ exports.schema = (_type, wschema) ->
   Schema = new mongoose.Schema(wschema.fields)
   
   # hooks
+  Schema.statics.beforeSave = wschema.hooks.beforeSave
+  Schema.statics.afterSave = wschema.hooks.afterSave
   
   for own name, plugin of wschema.plugins ? {} # plugins
     if _.isArray(plugin) then Schema.plugin(plugin[0], plugin[1]) else Schema.plugin(plugin)
@@ -76,17 +78,34 @@ exports.save = save = (_type, document, callback) ->
   
   normalize_populate(Type, document)
   
-  if document._id # update
-    Type.findById document._id, (err, doc) ->
-      if err then return callback(err)
-      for own prop, val of document # copy in new properties
-        if prop is '_id' then continue # ignore the _id property
-        doc[prop] = val
-      doc.save (err) ->
-        callback(err, doc?.toObject({getters: true}))
-  else # insert
-    Type.create document, (err, doc) ->
-      callback(err, doc?.toObject({getters: true}))
+  saved_document = null
+  
+  async.series [
+    (next) -> # call before save
+      if not Type.beforeSave then return next()
+      Type.beforeSave(document, next)
+      
+    (next) -> # call save
+      if document._id # update
+        Type.findById document._id, (err, doc) ->
+          if err then return callback(err)
+          for own prop, val of document # copy in new properties
+            if prop is '_id' then continue # ignore the _id property
+            doc[prop] = val
+          doc.save (err) ->
+            saved_document = doc?.toObject({getters: true})
+            next(err)
+      else # insert
+        Type.create document, (err, doc) ->
+          saved_document = doc?.toObject({getters: true})
+          next(err)
+      
+    (next) -> # call after save
+      if not Type.afterSave then return next()
+      Type.afterSave(saved_document, next)
+      
+  ], (err) ->
+    callback(err, saved_document)
 
 #
 # Uses the save method in an async parallel fashion, but will not return until all have been saved.
