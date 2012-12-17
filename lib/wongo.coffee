@@ -20,8 +20,8 @@ exports.schema = (_type, wschema) ->
   Schema = new mongoose.Schema(wschema.fields)
   
   # hooks
-  Schema.statics.beforeSave = wschema.hooks.beforeSave
-  Schema.statics.afterSave = wschema.hooks.afterSave
+  Schema.statics.beforeSave = wschema.hooks?.beforeSave
+  Schema.statics.afterSave = wschema.hooks?.afterSave
   
   for own name, plugin of wschema.plugins ? {} # plugins
     if _.isArray(plugin) then Schema.plugin(plugin[0], plugin[1]) else Schema.plugin(plugin)
