@@ -89,9 +89,7 @@ exports.save = save = (_type, document, callback) ->
       if document._id # update
         Type.findById document._id, (err, doc) ->
           if err then return callback(err)
-          for own prop, val of document # copy in new properties
-            if prop is '_id' then continue # ignore the _id property
-            doc[prop] = val
+          update_properties(doc, document)
           doc.save (err) ->
             saved_document = doc?.toObject({getters: true})
             next(err)
@@ -224,6 +222,15 @@ run_populate_queries = (Type, populate, docs, callback) ->
       
   , (err) ->
     callback(err, docs)
-  
+
+# copy any updates (properties that exist) to the doc, if null set to undefined (remove from DB)
+update_properties = (doc, updates) ->
+  for own prop, val of updates # copy in new properties
+    if prop is '_id' then continue # ignore the _id property
+    if _.isObject(val) then return update_properties(doc[prop], val) # sub document support
+    if val is null
+      doc[prop] = undefined # null means delete from DB, because json undefined = dont include
+    else
+      doc[prop] = val
   
   
