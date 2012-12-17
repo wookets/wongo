@@ -14,7 +14,7 @@ plugin_example = (schema, options) ->
   
 
 # add in Mock models that we can use to test against  
-Mock = wongo.schema 'Mock', 
+wongo.schema 'Mock', 
   fields: 
     name: String
     children: [{type: ObjectId, ref: 'Mock'}]
