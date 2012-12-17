@@ -38,7 +38,7 @@ wongo.schema = 'Mock',
   
 ```
 
-Want more examples? Check out the tests folder or just fill out an issue or ask. 
+Want more examples? Check out the tests folder or just fill out an issue and ask. 
 
 ## Changelog
 
