@@ -17,8 +17,13 @@ plugin_example = (schema, options) ->
 wongo.schema 'Mock', 
   fields: 
     name: String
+    
     children: [{type: ObjectId, ref: 'Mock'}]
     parent: {type: ObjectId, ref: 'Mock'}
+    
+    array: [String]
+    # refs: [{type: ObjectId, ref: 'Mock'}]
+    
     beforeSave: {type: String, default: 'not_changed'}
     afterSave: {type: String, default: 'not_changed'}
     beforeCreate: {type: String, default: 'not_changed'}

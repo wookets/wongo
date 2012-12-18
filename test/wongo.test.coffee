@@ -96,10 +96,7 @@ describe 'Wongo', ->
       child2_mock.parent = parent_mock
       wongo.saveAll 'Mock', [child_mock, child2_mock], (err, children) ->
         for child in children
-          if child.name is 'child'
-            child_mock = child
-          else
-            child2_mock = child
+          if child.name is 'child' then child_mock = child else child2_mock = child
         done()
   
   it 'should populate the parent on a child', (done) -> # singular reference populate
@@ -116,16 +113,12 @@ describe 'Wongo', ->
     parent_mock.children.push(child_mock)
     parent_mock.children.push(child2_mock)
     wongo.save 'Mock', parent_mock, (err, doc) ->
-      assert.ok(doc)
-      assert.ok(doc.children)
-      assert.equal(doc.children.length, 2)
+      assert.equal(doc?.children?.length, 2)
       done()
   
   it 'should populate the children on the parent', (done) -> # array based populate
     wongo.findOne 'Mock', {where: {_id: parent_mock._id}, populate: ['children']}, (err, doc) ->
-      assert.ok(doc)
-      assert.ok(doc.children)
-      assert.equal(doc.children.length, 2)
+      assert.equal(doc?.children?.length, 2)
       for child in doc.children
         assert.ok(child._id)
       done()
@@ -145,6 +138,24 @@ describe 'Wongo', ->
     wongo.save 'Mock', mockh, (err, doc) ->
       assert.equal(doc.beforeSave, 'changed')
       assert.equal(doc.afterSave, 'changed')
+      done()
+    
+  mockarray = {name: 'array', array: ['mike', 'joe', 'phil']}
+  it 'should make sure arrays are saved', (done) ->
+    wongo.save 'Mock', mockarray, (err, doc) ->
+      mockarray = doc
+      assert.equal(doc.array?.length, 3)
+      assert.equal(doc.array[0], 'mike')
+      assert.equal(doc.array[1], 'joe')
+      assert.equal(doc.array[2], 'phil')
+      done()
+  it 'should make sure arrays are updated', (done) ->
+    mockarray.array = ['joe', 'phil', 'mike']
+    wongo.save 'Mock', mockarray, (err, doc) ->
+      assert.equal(doc.array?.length, 3)
+      assert.equal(doc.array[0], 'joe')
+      assert.equal(doc.array[1], 'phil')
+      assert.equal(doc.array[2], 'mike')
       done()
     
   it 'should cleanup the database', (done) -> 

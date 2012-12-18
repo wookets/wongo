@@ -227,7 +227,9 @@ run_populate_queries = (Type, populate, docs, callback) ->
 update_properties = (doc, updates) ->
   for own prop, val of updates # copy in new properties
     if prop is '_id' then continue # ignore the _id property
-    if _.isObject(val) then return update_properties(doc[prop], val) # sub document support
+    if _.isArray(val) then doc.markModified(prop) # make sure we update array item order
+    else if _.isObject(val) then return update_properties(doc[prop], val) # sub document support
+
     if val is null
       doc[prop] = undefined # null means delete from DB, because json undefined = dont include
     else
