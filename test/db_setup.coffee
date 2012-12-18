@@ -22,6 +22,11 @@ wongo.schema 'Mock',
     parent: {type: ObjectId, ref: 'Mock'}
     
     array: [String]
+    embeddedArray: [
+      name: String
+      array: [String]
+      refArray: [{type: ObjectId, ref: 'Mock'}]
+    ]
     # refs: [{type: ObjectId, ref: 'Mock'}]
     
     beforeSave: {type: String, default: 'not_changed'}

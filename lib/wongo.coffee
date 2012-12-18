@@ -235,4 +235,3 @@ update_properties = (doc, updates) ->
     else
       doc[prop] = val
   
-  
