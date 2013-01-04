@@ -226,7 +226,8 @@ run_populate_queries = (Type, populate, docs, callback) ->
 # copy any updates (properties that exist) to the doc, if null set to undefined (remove from DB)
 update_properties = (doc, updates) ->
   for own prop, val of updates # copy in new properties
-    if prop is '_id' then continue # ignore the _id property
+    if prop is '_id' or prop is 'id' or prop is '_bsontype'
+      continue # ignore these properties
     if _.isArray(val) 
       doc.markModified(prop) # make sure we update array item order
     else if _.isDate(val)
