@@ -194,11 +194,11 @@ describe 'Wongo', ->
       done()
       
   it 'should make sure embedded ref arrays can be added', (done) ->
-    mockea.embeddedArray[0].refArray = [parent_mock, child_mock]
+    mockea.embeddedArray[0].refArray = [parent_mock._id, child_mock._id]
     wongo.save 'Mock', mockea, (err, doc) ->
       assert.equal(doc.embeddedArray[0].refArray.length, 2)
-      assert.equal(String(doc.embeddedArray[0].refArray[0]), String(parent_mock._id))
-      assert.equal(String(doc.embeddedArray[0].refArray[1]), String(child_mock._id))
+      assert.equal(doc.embeddedArray[0].refArray[0], parent_mock._id)
+      assert.equal(doc.embeddedArray[0].refArray[1], child_mock._id)
       done()
       
   it 'should make sure embedded ref arrays can be shuffled', (done) ->
@@ -207,9 +207,10 @@ describe 'Wongo', ->
     mockea.embeddedArray[0].refArray[1] = temp
     wongo.save 'Mock', mockea, (err, doc) ->
       assert.equal(doc.embeddedArray[0].refArray.length, 2)
-      assert.equal(String(doc.embeddedArray[0].refArray[1]), String(parent_mock._id))
-      assert.equal(String(doc.embeddedArray[0].refArray[0]), String(child_mock._id))
+      assert.equal(doc.embeddedArray[0].refArray[1], parent_mock._id)
+      assert.equal(doc.embeddedArray[0].refArray[0], child_mock._id)
       done()
       
   it 'should cleanup the database', (done) -> 
     wongo.clear('Mock', done)
+

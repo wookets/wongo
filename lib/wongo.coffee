@@ -37,6 +37,8 @@ exports.find = find = (_type, query, callback) ->
   mq = Type.find(query.where, query.select, {sort: query.sort, limit: query.limit, skip: query.skip})
   mq.lean()
   mq.exec (err, docs) ->
+    for doc in docs # support for changing ObjectID into String
+      convert_ids_to_string(doc)
     if query.populate # support for populate
       run_populate_queries(Type, query.populate, docs, callback)
     else
@@ -92,10 +94,12 @@ exports.save = save = (_type, document, callback) ->
           update_properties(doc, document)
           doc.save (err) ->
             saved_document = doc?.toObject({getters: true})
+            convert_ids_to_string(saved_document)
             next(err)
       else # insert
         Type.create document, (err, doc) ->
           saved_document = doc?.toObject({getters: true})
+          convert_ids_to_string(saved_document)
           next(err)
       
     (next) -> # call after save
@@ -179,16 +183,16 @@ exports.clear = (_type, callback) ->
 
 
 
-# normalize potentially populated references, since default behavior seems to not be as friendly as it should be...
+# normalize potentially populated references, since default behavior seems to not be as friendly as it should...
 normalize_populate = (Type, document) ->
-  for own key, value of document 
-    if Type.schema.path(key)?.options?.ref # direct object reference
-      if _.isObject(value) and value._id
-        document[key] = value._id
-    else if Type.schema.path(key)?.options?.type?[0]?.ref # array object reference
-      for item, i in value
+  for own prop, val of document 
+    if Type.schema.path(prop)?.options?.ref # direct object reference
+      if _.isObject(val) and val._id
+        document[prop] = val._id
+    else if Type.schema.path(prop)?.options?.type?[0]?.ref # array object reference
+      for item, i in val
         if _.isObject(item) and item._id
-          document[key][i] = item._id
+          document[prop][i] = item._id
 
 run_populate_queries = (Type, populate, docs, callback) ->
   if _.isString(populate) then populate = [populate] # string support
@@ -239,4 +243,38 @@ update_properties = (doc, updates) ->
       doc[prop] = undefined # null means delete from DB, because json undefined = dont include
     else
       doc[prop] = val
-  
+
+# change ObjectID to String so we can compare using standard javascript '===' 
+convert_ids_to_string = (doc) ->
+  for own prop, val of doc 
+    if _.isFunction(val) then continue
+    if _.isString(val) then continue
+    if _.isNumber(val) then continue
+    if _.isEmpty(val) then continue
+    if _.isDate(val) then continue
+    if _.isUndefined(val) then continue
+    if _.isBoolean(val) then continue
+    if _.isString(val) then continue
+    
+    if _.isArray(val) # handle array of _ids
+      newVal = []
+      for item in val
+        if _.isFunction(item) then continue
+        if _.isString(item) then continue
+        if _.isNumber(item) then continue
+        if _.isEmpty(item) then continue
+        if _.isDate(item) then continue
+        if _.isUndefined(item) then continue
+        if _.isBoolean(item) then continue
+        if _.isString(item) then continue
+        
+        if item instanceof mongoose.Types.ObjectId
+          newVal.push(String(item))
+        else if _.isObject(item)
+          convert_ids_to_string(item)
+    else if val instanceof mongoose.Types.ObjectId # handle objectIds
+      doc[prop] = String(val)
+    else if _.isObject(val) # handle nested objects
+      convert_ids_to_string(val)
+      
+
