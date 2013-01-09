@@ -272,6 +272,10 @@ convert_ids_to_string = (doc) ->
           newVal.push(String(item))
         else if _.isObject(item)
           convert_ids_to_string(item)
+          newVal.push(item)
+      if not _.isEmpty(newVal) 
+        doc[prop] = newVal
+      
     else if val instanceof mongoose.Types.ObjectId # handle objectIds
       doc[prop] = String(val)
     else if _.isObject(val) # handle nested objects
