@@ -15,12 +15,20 @@ describe 'Wongo', ->
   it 'should save a Mock named mint', (done) ->
     resource = {name: 'mint'}
     wongo.save 'Mock', resource, (err, doc) ->
-      if err then console.log err
-      assert.ok(doc)
-      assert.ok(doc._id)
+      assert.ok(doc?._id)
       assert.equal(doc.name, 'mint')
       assert.equal(doc._type, 'Mock')
       mock1 = doc
+      done()
+  
+  it.skip 'should fail to save a Mock named nothing', (done) ->
+    resource = {}
+    wongo.save 'Mock', resource, (err, doc) ->
+      assert.ok(err)
+      assert.equal(err.name, 'ValidationError')
+      #assert.ok(doc?._id)
+      #assert.equal(doc.name, 'mint')
+      #mock1 = doc
       done()
   
   it 'should find a Mock named mint', (done) ->
@@ -45,7 +53,7 @@ describe 'Wongo', ->
       done()
       
   it 'should update mints name to minty', (done) ->
-    wongo.update 'Mock', {name: 'mint'}, {name: 'minty'}, (err) ->
+    wongo.save 'Mock', {_id: mock1._id, name: 'minty'}, (err) ->
       assert.ok(not err)
       wongo.findById 'Mock', mock1._id, (err, mock) ->
         assert.ok(mock)
