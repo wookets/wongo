@@ -5,6 +5,7 @@ wongo = require '../lib/wongo'
 
 require './db_setup'
 
+
 describe 'Wongo', ->
 
   mock1 = null
@@ -132,11 +133,11 @@ describe 'Wongo', ->
   it 'should add a third child object after populate', (done) ->
     done()
   
-  mockp = {name: 'plugin', woof: 'woofer', meow: 'cat'}
+  mockp = {name: 'plugin', plugin1: 'woofer', plugin2: 'cat'}
   it 'should make sure plugin1 and plugin2 are added to schema', (done) ->
     wongo.save 'Mock', mockp, (err, doc) ->
-      assert.equal(doc.woof, 'woofer')
-      assert.equal(doc.meow, 'cat')
+      assert.equal(doc.plugin1, 'woofer')
+      assert.equal(doc.plugin2, 'cat')
       done()
       
   mockh = {name: 'hook'}
@@ -164,59 +165,58 @@ describe 'Wongo', ->
       assert.equal(doc.array[2], 'mike')
       done()
     
-  mockea = {name: 'array', embeddedArray: [{name: 'meow', array: ['ham', 'mike']}]}
+  mockea = {name: 'array', embedded_array: [{name: 'meow'}, {name: 'ham'}, {name: 'mike'}]}
   it 'should make sure embedded arrays are saved', (done) ->
     wongo.save 'Mock', mockea, (err, doc) ->
       mockea = doc
-      assert.equal(doc.embeddedArray?.length, 1)
-      assert.equal(doc.embeddedArray[0].name, 'meow')
-      assert.equal(doc.embeddedArray[0].array?.length, 2)
-      assert.equal(doc.embeddedArray[0].array[0], 'ham')
-      assert.equal(doc.embeddedArray[0].array[1], 'mike')
+      assert.equal(doc.embedded_array?.length, 3)
+      assert.equal(doc.embedded_array[0].name, 'meow')
+      assert.equal(doc.embedded_array[1].name, 'ham')
+      assert.equal(doc.embedded_array[2].name, 'mike')
       done()
   
   it 'should make sure embedded arrays are updated', (done) ->
-    mockea.embeddedArray[0].array = ['joe', 'phil', 'mike']
+    mockea.embedded_array = [{name: 'meow'}, {name: 'phil'}, {name: 'mike'}]
     wongo.save 'Mock', mockea, (err, doc) ->
-      assert.equal(doc.embeddedArray?.length, 1)
-      assert.equal(doc.embeddedArray[0].name, 'meow')
-      assert.equal(doc.embeddedArray[0].array?.length, 3)
-      assert.equal(doc.embeddedArray[0].array[0], 'joe')
-      assert.equal(doc.embeddedArray[0].array[1], 'phil')
-      assert.equal(doc.embeddedArray[0].array[2], 'mike')
+      assert.equal(doc.embedded_array?.length, 3)
+      assert.equal(doc.embedded_array[0].name, 'meow')
+      assert.equal(doc.embedded_array[1].name, 'phil')
+      assert.equal(doc.embedded_array[2].name, 'mike')
       done()
   
   it 'should make sure embedded arrays can be added to', (done) ->
-    mockea.embeddedArray.push(name: 'woof')
+    mockea.embedded_array.push({name: 'woof'})
     wongo.save 'Mock', mockea, (err, doc) ->
-      assert.equal(doc.embeddedArray?.length, 2)
+      assert.equal(doc.embedded_array?.length, 4)
+      assert.equal(doc.embedded_array[3].name, 'woof')
       done()
       
   it 'should make sure embedded arrays can be shuffled', (done) ->
-    temp = mockea.embeddedArray[0]
-    mockea.embeddedArray[0] = mockea.embeddedArray[1]
-    mockea.embeddedArray[1] = temp
+    temp = mockea.embedded_array[0]
+    mockea.embedded_array[0] = mockea.embedded_array[3]
+    mockea.embedded_array[3] = temp
     wongo.save 'Mock', mockea, (err, doc) ->
-      assert.equal(doc.embeddedArray[0].name, 'woof')
-      assert.equal(doc.embeddedArray[1].name, 'meow')
+      assert.equal(doc.embedded_array[0].name, 'woof')
+      assert.equal(doc.embedded_array[3].name, 'meow')
       done()
-      
+  
+  mockeoa = {name: 'em obj array', embedded_array2: [{name: 'bones', ref_array: []}]}
   it 'should make sure embedded ref arrays can be added', (done) ->
-    mockea.embeddedArray[0].refArray = [parent_mock._id, child_mock._id]
-    wongo.save 'Mock', mockea, (err, doc) ->
-      assert.equal(doc.embeddedArray[0].refArray.length, 2)
-      assert.equal(doc.embeddedArray[0].refArray[0], parent_mock._id)
-      assert.equal(doc.embeddedArray[0].refArray[1], child_mock._id)
+    mockeoa.embedded_array2[0].ref_array = [parent_mock._id, child_mock._id]
+    wongo.save 'Mock', mockeoa, (err, doc) ->
+      assert.equal(doc.embedded_array2[0].ref_array.length, 2)
+      assert.equal(doc.embedded_array2[0].ref_array[0], parent_mock._id)
+      assert.equal(doc.embedded_array2[0].ref_array[1], child_mock._id)
       done()
       
   it 'should make sure embedded ref arrays can be shuffled', (done) ->
-    temp = mockea.embeddedArray[0].refArray[0]
-    mockea.embeddedArray[0].refArray[0] = mockea.embeddedArray[0].refArray[1]
-    mockea.embeddedArray[0].refArray[1] = temp
-    wongo.save 'Mock', mockea, (err, doc) ->
-      assert.equal(doc.embeddedArray[0].refArray.length, 2)
-      assert.equal(doc.embeddedArray[0].refArray[1], parent_mock._id)
-      assert.equal(doc.embeddedArray[0].refArray[0], child_mock._id)
+    temp = mockeoa.embedded_array2[0].ref_array[0]
+    mockeoa.embedded_array2[0].ref_array[0] = mockeoa.embedded_array2[0].ref_array[1]
+    mockeoa.embedded_array2[0].ref_array[1] = temp
+    wongo.save 'Mock', mockeoa, (err, doc) ->
+      assert.equal(doc.embedded_array2[0].ref_array.length, 2)
+      assert.equal(doc.embedded_array2[0].ref_array[1], parent_mock._id)
+      assert.equal(doc.embedded_array2[0].ref_array[0], child_mock._id)
       done()
       
   it 'should cleanup the database', (done) -> 

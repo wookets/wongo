@@ -1,0 +1,3 @@
+{
+  "url": "mongodb://user:pass@host:port/db_name"
+}

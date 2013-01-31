@@ -1,20 +1,10 @@
 _ = require 'underscore'
 async = require 'async'
 mongoose = require 'mongoose'
-# Validator = require('validator').Validator
-# 
-# Validator::error = (msg) ->
-#   
-#   this._errors.push(msg)
-#   return this
-# 
-# Validator::getErrors = () ->
-#   return this._errors or []
 
 #
 # Mongoose pass thru... these are needed to have wongo control mongoose rather than wongo + your code
 exports.mongoose = mongoose
-exports.ObjectId = mongoose.Schema.ObjectId
 
 #
 # Mongoose connect
@@ -24,16 +14,34 @@ exports.connect = (url) ->
 # 
 # Mongoose schema replacement
 exports.schema = (_type, wschema) ->
-  wschema.fields._type = {type: String, default: _type, required: true} # add _type
+  if wschema.options?._type 
+    wschema.fields._type = {type: String, default: _type, required: true} # add _type
+    delete wschema.options._type
+  
   Schema = new mongoose.Schema(wschema.fields)
   
   # hooks (validate, beforeSave, afterSave
   for own prop, key of wschema.hooks ? {}
     Schema.statics[prop] = wschema.hooks[prop]
 
-  for own name, plugin of wschema.plugins ? {} # plugins
-    if _.isArray(plugin) then Schema.plugin(plugin[0], plugin[1]) else Schema.plugin(plugin)
-    
+  # plugins
+  for plugin in wschema.plugins ? []
+    if _.isArray(plugin) 
+      Schema.plugin(plugin[0], plugin[1])
+    else 
+      Schema.plugin(plugin)
+  
+  # indexes
+  for index in wschema.indexes ? []
+    if _.isArray(index) 
+      Schema.index(index[0], index[1])
+    else
+      Schema.index(index)
+  
+  # options
+  for own option, value of wschema.options ? {}
+    Schema.set(option, value)
+  
   mongoose.model(_type, Schema)
 
 #
@@ -164,24 +172,29 @@ exports.clear = (_type, callback) ->
   Type.remove({}, callback)
 
 
+#add_ref_suffix = (doc) ->
+  # look thru document for refs and add a new property _ref 
 
 # normalize potentially populated references, since default behavior seems to not be as friendly as it should...
 normalize_populate = (Type, document) ->
   for own prop, val of document 
     if Type.schema.path(prop)?.options?.ref # direct object reference
-      if _.isObject(val) and val._id
+      if val?._id
         document[prop] = val._id
     else if Type.schema.path(prop)?.options?.type?[0]?.ref # array object reference
       for item, i in val
-        if _.isObject(item) and item._id
+        if item?._id
           document[prop][i] = item._id
 
+# this will run 'join' queries when populate is specific in find methods
 run_populate_queries = (Type, populate, docs, callback) ->
   if _.isString(populate) then populate = [populate] # string support
   
   async.forEach populate, (prop, nextInLoop) -> # run some async queries to populate our model
     pop_type = Type.schema.path(prop)?.options?.ref # direct object reference
     pop_type ?= Type.schema.path(prop)?.options?.type?[0]?.ref # array object reference
+    
+    if not pop_type then throw new Error('Populate property ' + prop + ' could not be found on schema.')
     
     # we need to pull out the _id from each doc that was returned
     _ids = []
@@ -211,60 +224,36 @@ run_populate_queries = (Type, populate, docs, callback) ->
 
 # copy any updates (properties that exist) to the doc, if null set to undefined (remove from DB)
 update_properties = (doc, updates) ->
-  for own prop, val of updates # copy in new properties
+  for own prop, val of updates 
+    # ignore the _id because otherwise we get errors 
     if prop is '_id' or prop is 'id' or prop is '_bsontype'
-      continue # ignore these properties
-    if _.isArray(val) 
-      doc.markModified(prop) # make sure we update array item order
-    else if _.isDate(val)
-      # do nothing
-    else if _.isObject(val) 
-      return update_properties(doc[prop], val) # sub document support
-
-    if val is null
-      doc[prop] = undefined # null means delete from DB, because json undefined = dont include
-    else
+      continue 
+    # null means delete from DB, because json undefined = dont include
+    else if _.isNull(val) 
+      doc[prop] = undefined
+    # do a default copy (nothing special)
+    else if _.isFunction(val) or _.isString(val) or _.isNumber(val) or _.isDate(val) or _.isBoolean(val) or _.isUndefined(val)
       doc[prop] = val
+    # make sure we update array item order
+    else if _.isArray(val) 
+      doc[prop] = val
+      doc.markModified(prop)
+    # sub document support
+    else if _.isObject(val) 
+      return update_properties(doc[prop], val)
 
 # change ObjectID to String so we can compare using standard javascript '===' 
 convert_ids_to_string = (doc) ->
-  for own prop, val of doc 
-    if _.isFunction(val) then continue
-    if _.isString(val) then continue
-    if _.isNumber(val) then continue
-    if _.isEmpty(val) then continue
-    if _.isDate(val) then continue
-    if _.isUndefined(val) then continue
-    if _.isBoolean(val) then continue
-    if _.isString(val) then continue
-    if _.isNull(val) then continue
-    if _.isUndefined(val) then continue
-    
-    if _.isArray(val) # handle array of _ids
-      newVal = []
-      for item in val
-        if _.isFunction(item) then continue
-        if _.isString(item) then continue
-        if _.isNumber(item) then continue
-        if _.isEmpty(item) then continue
-        if _.isDate(item) then continue
-        if _.isUndefined(item) then continue
-        if _.isBoolean(item) then continue
-        if _.isString(item) then continue
-        if _.isNull(val) then continue
-        if _.isUndefined(val) then continue
-        
-        if item instanceof mongoose.Types.ObjectId
-          newVal.push(String(item))
-        else if _.isObject(item)
-          convert_ids_to_string(item)
-          newVal.push(item)
-      if not _.isEmpty(newVal) 
-        doc[prop] = newVal
-      
-    else if val instanceof mongoose.Types.ObjectId # handle objectIds
-      doc[prop] = String(val)
-    else if _.isObject(val) # handle nested objects
-      convert_ids_to_string(val)
-      
+  if doc instanceof mongoose.Types.ObjectId
+    return String(doc)
+  
+  if _.isFunction(doc) or _.isString(doc) or _.isNumber(doc) or _.isEmpty(doc) or _.isDate(doc) or _.isUndefined(doc) or _.isBoolean(doc) or _.isNull(val)
+    return doc
+  
+  if _.isArray(doc)
+    return (convert_ids_to_string(item) for item in doc)
 
+  if _.isObject(doc) 
+    for own prop, val of doc
+      doc[prop] = convert_ids_to_string(val)
+    return doc
