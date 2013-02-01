@@ -2,11 +2,40 @@
 
 Wongo is a mongoose.js wrapper that unwraps certain ORM functionality in an attempt to reduce code, increase predictibility and tweak functionality. 
 
-A wrapper that unwraps a wrapper. Crazy right?
-
 Disclaimer: This project is extremely immature, but feel free to take a peek around and be critical. 
 
-## Quick Example
+## Usage
+
+### a newer Schema definition
+
+```coffeescript
+wongo.schema = 'Mock',
+  fields:                                 # fields acts just like the normal mongoose schema
+    name: String
+    prop1: {type: Number, required: true}
+    embedded: [                           # embedded docs and everything are just like mongoose
+      name: String
+    ]
+    
+  plugins: [                              # accepts an array of mongoose plugins
+    any_mongoose_plugin, {option1: 'meow'}
+    any_other_mongoose_plugin
+  ]
+  
+  hooks:                                  # any triggers 
+    beforeSave: (document, next) ->       # document is a json doc, not a mongoose ORM doc
+    afterSave: (document, next) ->        # note, this allows async unlike mongoose
+    beforeFind: (query, next) ->
+    afterFind: (documents, next) ->
+  
+  options:                                # an object that allows you to change mongoose options for the schema
+    id: false
+    
+  indexes: [                              # add standard mongoose indices
+    {name: 1}
+    [{name: 1}, {unique: true}]
+  ]
+```
 
 ```coffeescript
 # find example
@@ -14,33 +43,27 @@ query = {where: {name: 'mint'}}
 wongo.find 'Mock', query, (err, docs) ->
   # docs is a raw json array of objects - i.e. it uses lean()
 
+# another find example (without where)
+query = {name: 'min'}
+wongo.find 'Mock', query, (err, docs) ->
+  # docs is a raw json array of objects - i.e. it uses lean()
+
 # save example
 document = {name: 'mint'}
 wongo.save 'Mock', document, (err, doc) ->
   # doc is a raw json object
-  
-# schema definition example
-wongo.schema = 'Mock',
-  fields: 
-    name: String
-    
-  plugins: 
-    'my existing mongoose plugin': [plugin_ref, {option1: 'meow'}]
-  
-  hooks:
-    beforeSave: (document, next) ->
-      # do something to the document before it is saved (will be a json doc, not a mongoose ORM doc)
-      next()
-    
-    afterSave: (document, next) ->
-      # do something to the document after it is saved (note, this allows async unlike mongoose)
-      next()
+
   
 ```
 
 Want more examples? Check out the tests folder or just fill out an issue and ask. 
 
 ## Changelog
+
+### 3.0 
+* Added indexes and options to wongo.schema.
+* Moved mongoose as a dependency 
+* A few cleanups of util methods
 
 ### 2.0 
 * Added wongo.schema if you want a different way to define your schema. 

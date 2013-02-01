@@ -49,6 +49,10 @@ exports.schema = (_type, wschema) ->
 # @return (err, docs)
 exports.find = find = (_type, query, callback) ->
   Type = mongoose.model(_type)
+  
+  query ?= {}
+  if not query.where # if 'where' isnt present, automatically nest
+    query = {where: query}
 
   async.waterfall [
     (next) -> # call beforeFind(query) hook
@@ -74,6 +78,8 @@ exports.find = find = (_type, query, callback) ->
 # @return (err, doc)
 exports.findOne = findOne = (_type, query, callback) ->
   query ?= {}
+  if not query.where # if 'where' isnt present, automatically nest
+    query = {where: query}
   query.limit = 1
   find _type, query, (err, result) ->
     if not err and result then result = result[0]

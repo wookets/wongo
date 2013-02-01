@@ -39,9 +39,22 @@ describe 'Wongo', ->
       assert.equal(mocks.length, 1)
       assert.equal(mocks[0].name, 'mint')
       done()
- 
+  it 'should find a Mock named mint without where', (done) ->
+    query = {name: 'mint'}
+    wongo.find 'Mock', query, (err, mocks) ->
+      assert.ok(mocks)
+      assert.equal(mocks.length, 1)
+      assert.equal(mocks[0].name, 'mint')
+      done()
+  
   it 'should find one Mock named mint', (done) ->
     query = {where: {name: 'mint'}}
+    wongo.findOne 'Mock', query, (err, mock) ->
+      assert.ok(mock)
+      assert.equal(mock.name, 'mint')
+      done()
+  it 'should find one Mock named mint without where', (done) ->
+    query = {name: 'mint'}
     wongo.findOne 'Mock', query, (err, mock) ->
       assert.ok(mock)
       assert.equal(mock.name, 'mint')
