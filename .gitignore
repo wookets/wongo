@@ -1,3 +1,4 @@
 /node_modules/
 /test/db_config.json
 .DS_Store
+/.DS_Store
