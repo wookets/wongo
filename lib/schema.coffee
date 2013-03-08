@@ -32,7 +32,4 @@ exports.schema = (_type, wschema) ->
   
   Type = mongoose.model(_type, Schema)
   
-  # setup validation
-  Type.validators = []
-  
   return Type

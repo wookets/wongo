@@ -142,3 +142,25 @@ exports.removeAll = removeAll = (_type, _ids, callback) ->
 exports.clear = (_type, callback) ->
   Type = mongoose.model(_type)
   Type.remove({}, callback)
+
+#
+# validate the full or partial document
+# @return true if valid or false if not
+# exports.validate = validate = (_type, document, callback) ->
+#   Type = mongoose.model(_type)
+#   paths = Type.schema.paths
+#   if document._id # means we are updating, only validate properties that exist    
+#     for own prop, val of document
+#       console.log document[prop]
+#   else # new object, validate everything
+#     for own path, pathVal of paths
+#       console.log paths[prop]
+#       switch pathVal.instance
+#         when 'String' 
+#           if not _.isString(document[path]) then 
+#       if path.isRequired then 
+# 
+# validatePath = (value, validators) ->
+  
+  
+  

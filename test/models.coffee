@@ -82,5 +82,6 @@ wongo.schema 'MockHierarchy',
   fields: 
     name: String
   
-  plugins: 
-    'nested_set': wongo.ns.plugin
+  plugins: [
+    wongo.ns.plugin
+  ]

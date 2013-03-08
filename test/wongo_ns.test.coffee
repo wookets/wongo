@@ -3,8 +3,6 @@ wongo = require '../lib/wongo'
 
 require './models'
 
-return
-
 describe 'Hierarchy', ->
 
   root = null

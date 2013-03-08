@@ -2,6 +2,7 @@
 _ = require 'underscore'
 async = require 'async'
 mongoose = require 'mongoose'
+validator = require 'validator'
 
 #
 # Mongoose pass thru... these are needed to have wongo control mongoose rather than wongo + your code
