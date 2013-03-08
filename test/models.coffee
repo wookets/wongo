@@ -1,11 +1,8 @@
+
+require './config'
 wongo = require '../lib/wongo'
 
-Schema = wongo.mongoose.Schema
-ObjectId = wongo.mongoose.Schema.ObjectId
-
-db_config = require './db_config.json' # read in your personal database settings
-wongo.connect(db_config.url) # establish a database connection
-
+wongo.connect(process.env.DB_URL)
 
 plugin_example = (schema, options) ->
   property = {}
@@ -78,4 +75,12 @@ wongo.schema 'Mock',
     
     afterRemove: (_id, next) ->
       next()
-      
+
+
+# add in Mock models that we can use to test against  
+wongo.schema 'MockHierarchy', 
+  fields: 
+    name: String
+  
+  plugins: 
+    'nested_set': wongo.ns.plugin

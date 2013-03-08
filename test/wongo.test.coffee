@@ -1,9 +1,8 @@
 assert = require 'assert'
 async = require 'async'
-
 wongo = require '../lib/wongo'
 
-require './db_setup'
+require './models'
 
 
 describe 'Wongo', ->

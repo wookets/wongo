@@ -1,4 +1,4 @@
 /node_modules/
-/test/db_config.json
+/test/config.coffee
 .DS_Store
 /.DS_Store
