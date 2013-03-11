@@ -17,8 +17,7 @@ describe 'Wongo CRUD All', ->
       assert.ok(item._id) for item in result
       done()
   it 'should be able to remove all documents', (done) ->
-    _ids = (doc._id for doc in docs)
-    wongo.removeAll 'MockAll', _ids, (err, result) ->
+    wongo.removeAll 'MockAll', docs, (err, result) ->
       assert.ifError(err)
       done()
   

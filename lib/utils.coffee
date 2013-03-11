@@ -1,5 +1,8 @@
 _ = require 'underscore'
 async = require 'async'
+mongodb = require 'mongodb'
+
+ObjectID = mongodb.ObjectID
 
 #
 # This will convert schema property types; e.g. String becomes {type: String}
@@ -59,8 +62,19 @@ exports.applyDefaults = applyDefaults = (document, schema) ->
 
 
 #
-# Validate an individual field
+# Validate
 #
+exports.validate = (document, schema) ->
+  if document._id # only validate properties that exist
+    for own prop, val of document
+      continue if prop is '_id'
+      result = validateField(document, prop, schema[prop])
+      if _.isString(result) then return Error(result)
+  else # validate all properties on schema
+    for own field, meta of schema
+      result = validateField(document, field, meta)
+      if _.isString(result) then return Error(result)
+
 exports.validateField = validateField = (document, field, meta) ->
   value = document[field]
   if meta.required and _.isUndefined(value) then return field + ' is required.'
@@ -83,3 +97,21 @@ exports.validateField = validateField = (document, field, meta) ->
       when Date
         if value and not _.isDate(value) then return field + ' needs to be a date.'
 
+
+#
+# add object _ids
+#
+exports.addObjectIdsToSubDocuments = addObjectIdsToSubDocuments = (document, schema) ->
+  for own prop, val of document
+    if prop is '_id' then continue
+    if _.isUndefined(document[prop]) then continue
+    meta = schema[prop]
+    if _.isArray(meta) 
+      if not meta[0].type
+        for item in document[prop] or []
+          document[prop]._id ?= String(ObjectID())
+          addObjectIdsToSubDocuments(item, meta[0])
+    else if not meta.type
+      document[prop]._id ?= String(ObjectID())
+      addObjectIdsToSubDocuments(document[prop], meta)
+    

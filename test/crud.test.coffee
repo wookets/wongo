@@ -45,8 +45,7 @@ describe 'Wongo CRUD', ->
       assert.equal(result?._id, doc._id)
       done()
   it 'should be able to remove a document', (done) ->
-    wongo.remove 'Mock', doc._id, (err, result) ->
+    wongo.remove 'Mock', doc, (err) ->
       assert.ifError(err)
-      assert.equal(result, 1)
       done()
       

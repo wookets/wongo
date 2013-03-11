@@ -43,14 +43,15 @@ exports.schema = (_type, schema) ->
 #
 # Save functions
 #
-exports.save = (_type, document, callback) ->
+exports.save = (_type, document, where, callback) ->
   schema = schemas[_type]
   async.series [
     (next) -> # validate incoming params
-      if not callback and not _.isFunction(callback) then throw Error('save() - callback required.') 
-      if not _type and not _.isString(_type) then return callback(Error('save() - _type required.')) 
-      if not document and not _.isObject(document) then return callback(Error('save() - document required.'))
-      if not schema then return callback(Error('save() - schema [' + _type + '] not found'))
+      if _.isFunction(where) and _.isUndefined(callback) then callback = where
+      if not callback or not _.isFunction(callback) then throw Error('callback required.') 
+      if not _type or not _.isString(_type) then return callback(Error('_type required.')) 
+      if not schemas[_type] then return callback(Error('_type [' + _type + '] not recognized'))
+      if not document or not _.isObject(document) or _.isEmpty(document) then return callback(Error('document required.'))
       next()
     (next) -> # make sure we are connected to the db
       ifConnected(next)
@@ -61,17 +62,25 @@ exports.save = (_type, document, callback) ->
       if not document._id then utils.applyDefaults(document, schema.fields) # set default properties if not set
       next()
     (next) -> # validate document
-      exports.validate(_type, document, next)
+      err = utils.validate(document, schema.fields)
+      next(err)
     (next) -> # before save
       next()
     (next) -> # add _id to an subdocs to mimic mongoose
-      addObjectIdsToSubDocuments(document, schema.fields)
+      utils.addObjectIdsToSubDocuments(document, schema.fields)
       next()
     (next) -> # execute save
       collection = db.collection(_type)
       if document._id
-        _id = document._id; delete document._id # strip out _id because we are updating
-        collection.update {_id: ObjectID(_id)}, {$set: document}, {w:1}, (err, result) ->
+        _id = document._id
+        delete document._id # strip out _id because we are updating
+        where ?= {}
+        where._id = ObjectID(_id) # force update on _id
+        update = {$set: document} # force wrap in a $set operation
+        unset = {} # unset null values from the database... we don't store nulls
+        unset[prop] = '' for own prop, val of document if _.isNull(val)
+        update.unset = {$unset: unset} if not _.isEmpty(unset)
+        collection.update where, update, {w:1}, (err, result) ->
           document._id = _id
           next(err)
       else
@@ -96,9 +105,10 @@ exports.saveAll = (_type, documents, callback) ->
 exports.find = (_type, query, callback) ->
   async.waterfall [
     (next) -> # validate incoming params
-      if not callback and not _.isFunction(callback) then throw Error('find() - callback required.') 
-      if not _type and not _.isString(_type) then return callback(Error('find() - _type required.')) 
-      if not query and not _.isObject(query) then return callback(Error('find() - query required.')) 
+      if not callback or not _.isFunction(callback) then throw Error('callback required.') 
+      if not _type or not _.isString(_type) then return callback(Error('_type required.')) 
+      if not schemas[_type] then return callback(Error('_type [' + _type + '] not recognized'))
+      if not query or not _.isObject(query) then return callback(Error('query required.')) 
       if not query.where then query = {where: query} # if 'where' isnt present, automatically nest
       next()
     (next) -> # make sure we are connected to the db
@@ -127,60 +137,76 @@ exports.findOne = (_type, query, callback) ->
 exports.findById = (_type, _id, callback) ->
   exports.findOne(_type, {_id: _id}, callback)
 
+exports.findByIds = (_type, _ids, callback) ->
+  exports.find(_type, {_id: {$in: _ids}}, callback) 
+
 
 #
 # Removal functions
 #
-exports.remove = (_type, _id, callback) ->
-  ifConnected () ->
-    collection = db.collection(_type)
-    collection.remove({_id: ObjectID(_id)}, {w:1}, callback)
+exports.remove = (_type, documentOrId, callback) ->
+  async.waterfall [
+    (next) -> # validate incoming params
+      if not callback or not _.isFunction(callback) then throw Error('callback required.') 
+      if not _type or not _.isString(_type) then return callback(Error('_type required.'))
+      if not schemas[_type] then return callback(Error('_type [' + _type + '] not recognized'))
+      if not documentOrId or _.isEmpty(documentOrId) then return callback(Error('documentOrId required.'))
+      next()
+    (next) -> # make sure we are connected to the db
+      ifConnected(next)
+    (next) -> # if documentOrId is a String then assume _id and load document
+      if _.isString(documentOrId)
+        exports.findById(_type, documentOrId, next)
+      else
+        next(null, documentOrId)
+    (document, next) -> # before remove
+      next(null, document) 
+    (document, next) -> # remove
+      collection = db.collection(_type)
+      collection.remove {_id: document.id}, {w:1}, (err, result) ->
+        next(err, document)
+    (document, next) -> # after remove
+      next()
+  ], callback
 
-exports.removeAll = (_type, _ids, callback) ->
-  async.forEach _ids, (_id, nextInLoop) ->
-    exports.remove(_type, _id, nextInLoop)
-  , (err) ->
-    callback(err)
+exports.removeAll = (_type, documentsOrIds, callback) ->
+  async.waterfall [
+    (next) -> # validate incoming params
+      if not callback or not _.isFunction(callback) then throw Error('callback required.') 
+      if not _type or not _.isString(_type) then return callback(Error('_type required.'))
+      if not schemas[_type] then return callback(Error('_type [' + _type + '] not recognized'))
+      if not documentsOrIds or not _.isArray(documentsOrIds) or _.isEmpty(documentsOrIds) then return callback(Error('documentsOrIds required.'))
+      next()
+    (next) -> # make sure we are connected to the db
+      ifConnected(next)
+    (next) -> # if documentOrIds is a String Array then assume _ids and load documents
+      if _.isString(documentsOrIds[0])
+        _ids = (_id for _id in documentOrIds when _.isString(_id))
+        exports.findByIds(_type, _ids, next)
+      else
+        next(null, documentsOrIds)
+    (documents, next) ->  
+      async.forEach documents, (document, nextInLoop) ->
+        exports.remove(_type, document, nextInLoop)
+      , next
+  ], callback
 
 exports.clear = (_type, callback) ->
-  ifConnected () ->
-    collection = db.collection(_type)
-    collection.remove({}, {w:1}, callback)
-
-
-#
-# Validate
-#
-exports.validate = (_type, document, callback) ->
-  schema = schemas[_type]
-  if document._id # only validate properties that exist
-    for own prop, val of document
-      continue if prop is '_id'
-      result = utils.validateField(document, prop, schema.fields[prop])
-      if _.isString(result) then return callback(Error(result))
-  else # validate all properties on schema
-    for own field, meta of schema.fields
-      result = utils.validateField(document, field, meta)
-      if _.isString(result) then return callback(Error(result))
-  callback()
-
-
-
-# add object _ids
-addObjectIdsToSubDocuments = (document, schema) ->
-  for own prop, val of document
-    if prop is '_id' then continue
-    if _.isUndefined(document[prop]) then continue
-    meta = schema[prop]
-    if _.isArray(meta) 
-      if not meta[0].type
-        for item in document[prop] or []
-          document[prop]._id ?= String(ObjectID())
-          addObjectIdsToSubDocuments(item, meta[0])
-    else if not meta.type
-      document[prop]._id ?= String(ObjectID())
-      addObjectIdsToSubDocuments(document[prop], meta)
+  async.series [
+    (next) -> # validate incoming params
+      if not callback or not _.isFunction(callback) then throw Error('callback required.') 
+      if not _type or not _.isString(_type) then return callback(Error('_type required.'))
+      if not schemas[_type] then return callback(Error('_type [' + _type + '] not recognized'))
+      next()
+    (next) -> # make sure we are connected to the db
+      ifConnected(next)
+    (next) -> 
+      collection = db.collection(_type)
+      collection.remove {}, {w:1}, (err, result) ->
+        next(err, result)
+  ], callback
     
+
 
 #
 # delay the query until a connection is established 
@@ -198,6 +224,7 @@ ifConnected = (callback) ->
     else
       attempts += 1
   , 250
+
 
 #  
 # change ObjectID to String so we can compare using standard javascript '===' 
