@@ -1,6 +1,6 @@
 # Wongo
 
-Wongo is a mongoose.js wrapper that unwraps certain ORM functionality in an attempt to reduce code, increase predictibility and tweak functionality. 
+Wongo is a mongodb wrapper intended to simplify working with the database. The intent is to have feature parity with mongoose (where it makes sense)...  
 
 Disclaimer: This project is extremely immature, but feel free to take a peek around and be critical. 
 
@@ -17,21 +17,18 @@ wongo.schema = 'Mock',
       name: String
     ]
     
-  plugins: [                              # accepts an array of mongoose plugins
+  plugins: [                              # accepts an array of plugins
     any_mongoose_plugin, {option1: 'meow'}
     any_other_mongoose_plugin
   ]
   
   hooks:                                  # any triggers 
-    beforeSave: (document, next) ->       # document is a json doc, not a mongoose ORM doc
+    beforeSave: (document, next) ->       # document is a json doc
     afterSave: (document, next) ->        # note, this allows async unlike mongoose
     beforeFind: (query, next) ->
     afterFind: (documents, next) ->
-  
-  options:                                # an object that allows you to change mongoose options for the schema
-    id: false
     
-  indexes: [                              # add standard mongoose indices
+  indexes: [                              # add standard mongodb compliant indices
     {name: 1}
     [{name: 1}, {unique: true}]
   ]
@@ -59,6 +56,11 @@ wongo.save 'Mock', document, (err, doc) ->
 Want more examples? Check out the tests folder or just fill out an issue and ask. 
 
 ## Changelog
+
+### 4.0 
+* Completely ditched mongoose.js. When I first started this project I always thought about it, since mongoose is like a big ogre. I finally feel 'semi' comfortable taking on the direct approach and working directly with the native mongodb driver. 
+* Rewrote everything and every test. There are currently over 50 tests, I'm imagining this number will grow to 200+ before the day is done.
+* Basic schemas and queries all work. Still needs a lot of work ironing out many more detailed features to bring it inline and then go past mongoose's feature set. The goal is not to directly replicate everything in mongoosejs, but to take what is good and makes sense. 
 
 ### 3.0 
 * Added indexes and options to wongo.schema.
