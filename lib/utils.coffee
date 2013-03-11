@@ -1,98 +1,85 @@
-
 _ = require 'underscore'
 async = require 'async'
-mongoose = require 'mongoose'
-validator = require 'validator'
 
 #
-# Mongoose pass thru... these are needed to have wongo control mongoose rather than wongo + your code
-exports.mongoose = mongoose
+# This will convert schema property types; e.g. String becomes {type: String}
+# This will recurse the documents and do all subdocuments and arrays
+#
+exports.normalizeSchema = normalizeSchema = (schema) ->
+  for own field, meta of schema
+    if _.isArray(meta) 
+      switch meta[0] 
+        when String, Number, Boolean, Date then schema[field][0] = {type: meta[0]}
+      if not schema[field][0].type then normalizeSchema(meta[0])
+    else if not meta.type
+      switch meta
+        when String, Number, Boolean, Date then schema[field] = {type: meta}
+        else normalizeSchema(meta)
+
 
 #
-# Mongoose connect
-exports.connect = (url) ->
-  mongoose.connect(url)
+# This method will call any passed in plugins, which are just functions that receive the schema and any options
+#
+exports.applyPlugins = (schema) ->
+  for plugin in schema.plugins ? []
+    if _.isArray(plugin) # [function, args]
+      plugin[0](schema, plugin[1])
+    else # [function]
+      plugin(schema)
 
 
-# normalize potentially populated references, since default behavior seems to not be as friendly as it should...
-normalize_populate = (Type, document) ->
-  for own prop, val of document 
-    if Type.schema.path(prop)?.options?.ref # direct object reference
-      if val?._id
-        document[prop] = val._id
-    else if Type.schema.path(prop)?.options?.type?[0]?.ref # array object reference
-      for item, i in val
-        if item?._id
-          document[prop][i] = item._id
+#
+# This method will prune (remove) all properties not explicitly defined on the schema.
+#
+exports.prune = prune = (document, schema) ->
+  for own prop, val of document
+    if not schema[prop] then delete document[prop]
+    else if _.isArray(schema[prop]) # handle array embedded document
+      for item in val or [] 
+        if _.isObject(item) then prune(item, schema[prop][0]) 
+    else if _.isObject(val) # handle embedded document
+      prune(val, schema[prop])
 
-# this will run 'join' queries when populate is specific in find methods
-run_populate_queries = (Type, populate, docs, callback) ->
-  if _.isString(populate) then populate = [populate] # string support
-  
-  async.forEach populate, (prop, nextInLoop) -> # run some async queries to populate our model
-    pop_type = Type.schema.path(prop)?.options?.ref # direct object reference
-    pop_type ?= Type.schema.path(prop)?.options?.type?[0]?.ref # array object reference
-    
-    if not pop_type then throw new Error('Populate property ' + prop + ' could not be found on schema.')
-    
-    # we need to pull out the _id from each doc that was returned
-    _ids = []
-    for doc in docs
-      if _.isArray(doc[prop])
-        _ids = _.union(doc[prop], _ids)
-      else 
-        _ids.push(doc[prop])
-    
-    # we need to query for each pop type based on assembled _ids
-    find pop_type, {where: {_id: {$in: _ids}}}, (err, pop_docs) ->
-      if err then return nextInLoop(err)
-    
-      for doc in docs # assign back to doc 
-        for pop_doc in pop_docs
-          if _.isArray(doc[prop])
-            for item, i in doc[prop]
-              if String(pop_doc._id) is String(item)
-                doc[prop][i] = pop_doc
-          else
-            if String(pop_doc._id) is String(doc[prop])
-              doc[prop] = pop_doc
-      nextInLoop()
-      
-  , (err) ->
-    callback(err, docs)
 
-# copy any updates (properties that exist) to the doc, if null set to undefined (remove from DB)
-update_properties = (doc, updates) ->
-  for own prop, val of updates 
-    # ignore the _id because otherwise we get errors 
-    if prop is '_id' or prop is 'id' or prop is '_bsontype'
-      continue 
-    # null means delete from DB, because json undefined = dont include
-    else if _.isNull(val) 
-      doc[prop] = undefined
-    # do a default copy (nothing special)
-    else if _.isFunction(val) or _.isString(val) or _.isNumber(val) or _.isDate(val) or _.isBoolean(val) or _.isUndefined(val)
-      doc[prop] = val
-    # make sure we update array item order
-    else if _.isArray(val) 
-      doc[prop] = val
-      doc.markModified(prop)
-    # sub document support
-    else if _.isObject(val) 
-      return update_properties(doc[prop], val)
+#
+# Apply default values to fields if specified.
+#
+exports.applyDefaults = applyDefaults = (document, schema) ->
+  for own prop, val of document
+    meta = schema[prop]
+    if _.isArray(meta) and not meta[0]?.type # check array
+      for item in val or []
+        applyDefaults(item, meta[0])
+    else if not meta.type # check object
+      applyDefaults(val, meta)
+    else
+      if not _.isUndefined(val) then continue 
+      default_value = if _.isArray(meta) then meta[0].default else meta.default
+      document[prop] ?= default_value
 
-# change ObjectID to String so we can compare using standard javascript '===' 
-convert_ids_to_string = (doc) ->
-  if doc instanceof mongoose.Types.ObjectId
-    return String(doc)
-  
-  if _.isFunction(doc) or _.isString(doc) or _.isNumber(doc) or _.isEmpty(doc) or _.isDate(doc) or _.isUndefined(doc) or _.isBoolean(doc) or _.isNull(val)
-    return doc
-  
-  if _.isArray(doc)
-    return (convert_ids_to_string(item) for item in doc)
 
-  if _.isObject(doc) 
-    for own prop, val of doc
-      doc[prop] = convert_ids_to_string(val)
-    return doc
+#
+# Validate an individual field
+#
+exports.validateField = validateField = (document, field, meta) ->
+  value = document[field]
+  if meta.required and _.isUndefined(value) then return field + ' is required.'
+  if _.isArray(meta)
+    if meta[0].required and _.isUndefined(value) then return field + ' is required.'
+    validateField(field, item, meta[0]) for item in value or []
+  else
+    switch meta.type
+      when String
+        if value and not _.isString(value) then return field + ' needs to be a string.'
+        if meta.min and value?.length < meta.min then return field + ' needs to be at least ' + meta.min + ' characters in length.'
+        if meta.max and value?.length > meta.max then return field + ' needs to be at most ' + meta.max + ' characters in length.'
+        if meta.enum and not _.contains(meta.enum, value) then return field + ' must be valid.'
+      when Number
+        if value and not _.isNumber(value) then return field + ' needs to be a number.'
+        if meta.min and value < meta.min then return field + ' needs to be greater than ' + meta.min + '.'
+        if meta.max and value > meta.max then return field + ' needs to be less than or equal to ' + meta.max + '.'
+      when Boolean
+        if value and not _.isBoolean(value) then return field + ' needs to be a boolean.'
+      when Date
+        if value and not _.isDate(value) then return field + ' needs to be a date.'
+

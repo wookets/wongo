@@ -1,9 +1,9 @@
 {
   "name": "wongo", 
-  "description": "An unwrapper wrapper for mongoose.js",
+  "description": "A thin wrapper for mongodb",
   "main": "./lib/wongo",
   "author": "wookets",
-  "version": "0.3.4", 
+  "version": "0.4.0", 
   "repository": {
     "type": "git",
     "url": "http://github.com/wookets/wongo.git"
@@ -18,10 +18,9 @@
     }
   ],
   "dependencies": {
-    "async": "0.1.x",
-    "mongoose": "3.5.x",
-    "underscore": "1.4.x",
-    "validator": "0.4.x"
+    "async": "0.2.x",
+    "mongodb": "1.2.x",
+    "underscore": "1.4.x"
   },
   "devDependencies": {
     "mocha": "1.6.0"
