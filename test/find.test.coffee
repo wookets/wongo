@@ -10,7 +10,7 @@ describe 'Wongo Find', ->
   docs = [{name: 'Meow'}, {name: 'Boo'}, {name: 'Fran'}, {name: 'Kitty'}, {name: 'Woof'}]
   
   it 'should be able to save all documents', (done) ->
-    wongo.saveAll 'MockFind', docs, (err, result) ->
+    wongo.save 'MockFind', docs, (err, result) ->
       assert.ifError(err)
       assert.ok(item._id) for item in result
       done()

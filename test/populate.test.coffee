@@ -30,7 +30,7 @@ describe 'Wongo Populate', ->
   
   it 'should be able to save posts', (done) ->
     post.author_ref = author._id for post in posts
-    wongo.saveAll 'MockPost', posts, (err, result) ->
+    wongo.save 'MockPost', posts, (err, result) ->
       assert.ifError(err)
       assert.ok(result[0]._id and result[1]._id)
       posts = result

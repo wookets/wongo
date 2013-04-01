@@ -11,10 +11,6 @@ npm install wongo
 
 ## Usage
 
-1. Connect to mongodb
-2. Define a schema
-3. CRUD away
-
 ### Connect to the database
 
 ```coffeescript
@@ -22,17 +18,16 @@ wongo = require 'wongo'
 wongo.connect(url)
 ```
 
-### Define a Schema
+### Define a schema
 
 ```coffeescript
 wongo.schema = 'Mock',
   fields:                                 # fields acts just like the normal mongoose schema
     name: String
-    prop1: {type: Number, required: true}
-    embedded: [                           # embedded docs and everything are just like mongoose
+    embeddedArray: [                      # embedded docs and everything are just like mongoose
       name: String
     ]
-    createdOn: Date
+    createdOn: {type: Date, required: true}
   
   hooks:                                  # participate in middleware
     save: 
@@ -53,44 +48,47 @@ wongo.schema = 'Mock',
   ]
 ```
 
-### Run some Find and CRUD queries
+### Save a document 
+```coffeescript
+doc = {name: 'Woof'}
+wongo.save 'Mock', doc, (err, result) ->
+  # result is the saved raw json object
+```
 
+### Update a document
+```coffeescript
+partialDoc = {name: 'Wallace'}
+where = {name: 'Gromit'}
+wongo.save 'Mock', partialDoc, where, (err, result) ->
+  # since we used a 'where' 
+```
+
+### Find documents
 ```coffeescript
 # find example
-query = {where: {name: 'mint'}}
+query = {name: 'mint'}
 wongo.find 'Mock', query, (err, docs) ->
-  # docs is a raw json array of objects - i.e. it uses lean()
+  # docs is a raw json array of objects
+```
 
-# another find example (without where)
-query = {name: 'min'}
-wongo.find 'Mock', query, (err, docs) ->
-  # docs is a raw json array of objects - i.e. it uses lean()
-
-# save example
-document = {name: 'mint'}
-wongo.save 'Mock', document, (err, doc) ->
-  # doc is a raw json object
-
-# update example (still partakes in save middleware)
-where = {_id: 'uniqueId'}
-partialDocument = {age: 12}
-wongo.update 'Mock', where, partialDocument, (err) ->
-  # doc will be updated
-
+### Remove a document
+```coffeescript
 # remove by _id example (still partakes in remove middleware)
 documentId = 'uniqueId'
-wongo.remove 'Mock', documentId, (err, doc) ->
-  # doc has been removed by _id
-
+wongo.remove 'Mock', documentId, (err) ->
+  # doc has been removed
 # remove by doc example
 document = {_id: 'uniqueId'}
-wongo.remove 'Mock', document, (err, doc) ->
+wongo.remove 'Mock', document, (err) ->
   # doc has been removed
 ```
 
 Want more examples? Check out the tests folder or just fill out an issue and ask. 
 
 ## Changelog
+
+### 5.0
+* Added populate support
 
 ### 4.0 
 * Completely ditched mongoose.js. When I first started this project I always thought about it, since mongoose is like a big ogre. I finally feel 'semi' comfortable taking on the direct approach and working directly with the native mongodb driver. 

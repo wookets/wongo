@@ -12,7 +12,7 @@ describe 'Wongo CRUD All', ->
   #
   docs = [{name: 'Meow'}, {name: 'Boo'}, {name: 'Fran'}]
   it 'should be able to save all documents', (done) ->
-    wongo.saveAll 'MockAll', docs, (err, result) ->
+    wongo.save 'MockAll', docs, (err, result) ->
       assert.ifError(err)
       assert.ok(item._id) for item in result
       done()

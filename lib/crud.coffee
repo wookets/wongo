@@ -12,12 +12,22 @@ populate = require __dirname + '/populate'
 
 
 #
-# Save functions
+# Save function
+# accepts a full document with or without an _id
+# accepts partial documents
+# accepts a where constraint to only update if conditions match
 #
 exports.save = (_type, document, where, callback) ->
+  if _.isFunction(where) then callback = where; where = {}
+  # add primative support for saving multiple documents
+  if _.isArray(document)
+    async.each document, (doc, nextInLoop) ->
+      exports.save(_type, doc, where, nextInLoop)
+    , (err) -> 
+      callback(err, document)
+    return
   # validate incoming params before doing anything
   schema = modeler.schema(_type)
-  if _.isFunction(where) then callback = where; where = {}
   if not callback or not _.isFunction(callback) then throw Error('callback required.')
   if not document or not _.isObject(document) or _.isEmpty(document) then throw Error('document required.')
   # execute middleware and save
@@ -47,12 +57,6 @@ exports.save = (_type, document, where, callback) ->
         next(err)
   ], (err) ->
     callback(err, document)
-
-exports.saveAll = (_type, documents, callback) ->  
-  async.each documents, (document, nextInLoop) ->
-    exports.save(_type, document, nextInLoop)
-  , (err) ->
-    callback(err, documents)  
 
 
 #
