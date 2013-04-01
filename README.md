@@ -1,12 +1,27 @@
 # Wongo
 
-Wongo is a mongodb wrapper intended to simplify working with the database. The intent is to have feature parity with mongoose (where it makes sense)...  
+Wongo is a mongodb wrapper intended to simplify working with the database. The intent is to have feature parity with mongoose where it makes sense.
 
-Disclaimer: This project is extremely immature, but feel free to take a peek around and be critical. 
+It is written in coffeescript *cringe*, but does have over 60 mocha tests with more being added everyday. Previous versions were based on mongoose, but I have since taken to coding directly against native mongodb driver.
+
+## Installation
+
+npm install wongo
 
 ## Usage
 
-### a newer Schema definition
+1. Connect to mongodb
+2. Define a schema
+3. CRUD away
+
+### Connect to the database
+
+```coffeescript
+wongo = require 'wongo'
+wongo.connect(url)
+```
+
+### Define a Schema
 
 ```coffeescript
 wongo.schema = 'Mock',
@@ -16,23 +31,28 @@ wongo.schema = 'Mock',
     embedded: [                           # embedded docs and everything are just like mongoose
       name: String
     ]
-    
-  plugins: [                              # accepts an array of plugins
-    any_mongoose_plugin, {option1: 'meow'}
-    any_other_mongoose_plugin
-  ]
+    createdOn: Date
   
-  hooks:                                  # any triggers 
-    beforeSave: (document, next) ->       # document is a json doc
-    afterSave: (document, next) ->        # note, this allows async unlike mongoose
-    beforeFind: (query, next) ->
-    afterFind: (documents, next) ->
+  hooks:                                  # participate in middleware
+    save: 
+      before: (document, next) ->         # document is a json doc
+      after: (document, next) ->          # note, this allows async unlike mongoose
+      validate: (document, schema) ->     # we can even override wongo's validation with our own
+      prune: false                        # or set the pruner to false if we dont want wongo to trim our documents
+    find: 
+      before: (query, next) ->            # modify a find query before it is run
+      after: (documents, next) ->         # after we find a group of documents, we can do something with them
+    remove: 
+      before: (document, next) ->
+      after: (document, next) ->
     
   indexes: [                              # add standard mongodb compliant indices
     {name: 1}
-    [{name: 1}, {unique: true}]
+    [{name: 1}, {unique: true}]           # use an array to pass in index options
   ]
 ```
+
+### Run some Find and CRUD queries
 
 ```coffeescript
 # find example
@@ -50,7 +70,21 @@ document = {name: 'mint'}
 wongo.save 'Mock', document, (err, doc) ->
   # doc is a raw json object
 
-  
+# update example (still partakes in save middleware)
+where = {_id: 'uniqueId'}
+partialDocument = {age: 12}
+wongo.update 'Mock', where, partialDocument, (err) ->
+  # doc will be updated
+
+# remove by _id example (still partakes in remove middleware)
+documentId = 'uniqueId'
+wongo.remove 'Mock', documentId, (err, doc) ->
+  # doc has been removed by _id
+
+# remove by doc example
+document = {_id: 'uniqueId'}
+wongo.remove 'Mock', document, (err, doc) ->
+  # doc has been removed
 ```
 
 Want more examples? Check out the tests folder or just fill out an issue and ask. 

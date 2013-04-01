@@ -14,6 +14,7 @@ wongo.schema 'MockEmbed',
         name: String
       ]
     ]
+  
 
 describe 'Wongo Embedded', ->
   

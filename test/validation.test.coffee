@@ -10,6 +10,7 @@ wongo.schema 'MockValidation',
     array: [{type: String, required: true}]
     date: {type: Date, required: true}
     enum: {type: String, required: true, enum: ['woof', 'bark', 'meow']}
+    
 
 describe 'Wongo validation', ->
   
