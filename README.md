@@ -5,8 +5,9 @@ Wongo is a mongodb wrapper intended to simplify working with the database. The i
 It is written in coffeescript *cringe*, but does have over 60 mocha tests with more being added everyday. Previous versions were based on mongoose, but I have since taken to coding directly against native mongodb driver.
 
 ## Installation
-
+```
 npm install wongo
+```
 
 ## Usage
 
