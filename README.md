@@ -198,16 +198,11 @@ Here is an example of a plugin which adds createdOn and modifiedOn to the schema
 adds before middleware save functionality. Note, that unshift is used to apply the middleware before
 validation. 
 ```coffeescript
-#
 # Addes a modifiedOn and createdOn timestamp to a schema and updates beforeSave.
-#
 module.exports = (schema, options) ->
-  options ?= {}
-
   # add fields to schema
   schema.fields.createdOn = {type: Date, required: true}
   schema.fields.modifiedOn = {type: Date, required: true}
-  
   # add beforeSave middleware
   schema.middleware.beforeSave.unshift (document, schema, callback) ->
     document.createdOn ?= new Date()
@@ -225,6 +220,9 @@ module.exports = (schema, options) ->
 Want more examples? Check out the tests folder or just fill out an issue and ask. 
 
 ## Changelog
+
+### 6.0 
+* Added plugin support
 
 ### 5.0
 * Added populate support
