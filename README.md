@@ -10,18 +10,23 @@ npm install wongo
 ## Usage
 
 ### Connect to the database
-
 ```coffeescript
 wongo = require 'wongo'
 wongo.connect(url)
 ```
 
-### Define a schema
+### Define a basic schema
+```coffeescript
+wongo.schema = 'Mock',
+  fields: 
+    name: String
+```
 
+### or define a more complex schema
 ```coffeescript
 wongo.schema = 'Mock',
   fields:                                 # fields acts just like the normal mongoose schema
-    name: String
+    name: {type: String}
     embeddedArray: [                      # embedded docs and everything are just like mongoose
       name: String
     ]
