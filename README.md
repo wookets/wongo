@@ -3,6 +3,7 @@
 Wongo is an ODM-like library intended to simplify working with mongodb. The intent is to have feature parity with mongoosejs, but simplier and cleaner.
 
 * [Installation](#installation)
+* [Usage](#usage)
 
 ## Installation
 ```
