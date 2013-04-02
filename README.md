@@ -71,7 +71,7 @@ wongo.save 'Mock', partialDoc, where, (err, result) ->
 
 ### Update a lot of documents
 ```coffeescript
-documents = [{},{},{}]
+documents = [{name: 'bil'},{name: 'sig'},{name: 'boo'}]
 where = {accountId: '65'}
 wongo.save 'Mock', documents, where, (err, result) -> 
 ```
@@ -84,12 +84,11 @@ wongo.find 'Mock', query, (err, docs) -> # docs is a raw json array of objects
 
 ### Remove a document
 ```coffeescript
-# remove by doc example
 document = {_id: 'uniqueId'}
 wongo.remove 'Mock', document, (err) -> # doc has been removed
 
 ### Remove a document by _id
-# remove by _id example (still partakes in remove middleware)
+```coffeescript
 documentId = 'uniqueId'
 wongo.remove 'Mock', documentId, (err) -> # doc has been removed
 ```
@@ -100,6 +99,10 @@ Want more examples? Check out the tests folder or just fill out an issue and ask
 
 ### 5.0
 * Added populate support
+* Compiled to JS 
+* Better organization
+* Full hook override array que support for save, find, and remove
+* Nixed removeAll and saveAll
 
 ### 4.0 
 * Completely ditched mongoose.js. When I first started this project I always thought about it, since mongoose is like a big ogre. I finally feel 'semi' comfortable taking on the direct approach and working directly with the native mongodb driver. 
@@ -123,12 +126,13 @@ Want more examples? Check out the tests folder or just fill out an issue and ask
 
 This library was created because I was annoyed by the little things in mongoosejs. 
 
-Disclaimer: Before I get into the annoyances, mongoosejs is a terrific library. Nothing really comes close to it in terms of feature set, so the point of this project is not to reinvite the whell, but to make it fit on my car. If you're driving a truck, you shouldn't use this library. 
+Disclaimer: Before I get into the annoyances, mongoosejs is a terrific library. Nothing really comes close to it in terms of feature set, so the point of this project is not to reinvite the wheel, but to make it fit on my car. If you're driving a truck, you shouldn't use this library. 
 
-* Property values on objects would sometimes randomly disappear after a find. Using a doc.get('prop') fixed the problem, but why? Surely, there was a mongoosejs bug a foot. But, small little bugs like this in ORM / Active Record patterns are what makes you want to throw the whole thing out the window. Wongo Solution: it uses lean() and toObject() on everything. 
-* mongoosejs ORM behavior can have devestating consequences on large data sets. Wongo Solution: use lean() on every query that returns an array of documents.  
-* I have a very personal distain for the active record pattern. Look people, I get it... It's nice to do resource.save() and not bring in another import / require statement, but it is also nice not to have a cluster of different functions and properties on my domain model. 98% of which I will never even use. I prefer the data access object pattern. But, hey, if you like the active record, keep using mongoose. There is nothing for you here. Wongo Solution: every method has a _type as the first parameter, so you dont have to mongoose.model anything. Or rely on doc.save(), which recently broke on me in my other project. Again, weird ORM bugs. 
-* Populate and depopulate are great in mongoose. However, there are some oddities. For example, if you populate a property and then later simply add an _id. Don't populate something, but add an object with an _id. There are some inconsistencies that wongo attempts to solve. Wongo Solution: before saving a resource, the schema is checked and depopulation is normalized if needed.
+* Property values on objects would sometimes randomly disappear after a find. Using a doc.get('prop') fixed the problem, but wtf? This is one of those annoyances with ODM or ORM libraries where your json objects turn into 'magic' beans with various quirks in them. I created this library so you could work with MongoDB, define a schema, but just work with native JSON data objects and not have magic methods or properties added and removed. Essentially, documents dont have lifecycles, they are just dumb data documents. 
+* Mongoosejs recently fixed using lean() on populate queries and in general. Wongo never messes with your data documents, so there will never be a 'lean()' problem... ever.
+* I have a very personal distain for the active record pattern. It is nice to do resource.save() and not bring in another import / require statement, but you still need to do mongoose.model('') to get the 'model'... And then you have to worry about, what state is this data object in? My point is, let's just let data be data and business logic not be defined directly on the data document. 
+* The other reason I don't like the active record pattern... I worked next to a company that had an 'active record pattern domain model' java class that was 10,000 lines of code. What a mess. 
+* Populate and depopulate are great in mongoose. However, I wanted something better and less 'oh, lets just override a property with an object and then go back in and save that object and have a potential mess.' So, in wongo, populate aliases can be defined on the schema. If you want to populate accountIds, you can do that, but you can also have it stick the account documents in the accounts property. 
 
 
 ## Running the Tests

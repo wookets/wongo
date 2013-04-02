@@ -2,3 +2,4 @@
 /test/config.coffee
 .DS_Store
 /.DS_Store
+/codekit-config.json
