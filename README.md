@@ -8,6 +8,7 @@ Wongo is an ODM-like library intended to simplify working with mongodb. The inte
 * [Queries](#queries)
 * [Middleware](#middleware)
 * [Populate](#populate)
+* [Plugins](#plugins)
 
 ## Installation
 ```
@@ -180,6 +181,32 @@ wongo.options.validate = (document, schema, callback) ->
 ```
 
 ## Populate
+
+## Plugins
+Plugins work similar to mongoose, though they aren't compatible, because the schema object will be different. 
+
+Here is an example of a plugin which adds createdOn and modifiedOn to the schema and also 
+adds before middleware save functionality. Note, that unshift is used to apply the middleware before
+validation. 
+```coffeescript
+#
+# Addes a modifiedOn and createdOn timestamp to a schema and updates beforeSave.
+#
+module.exports = (schema, options) ->
+  options ?= {}
+
+  # add fields to schema
+  schema.fields.createdOn = {type: Date, required: true}
+  schema.fields.modifiedOn = {type: Date, required: true}
+  
+  # add beforeSave middleware
+  schema.middleware.beforeSave.unshift (document, schema, callback) ->
+    document.createdOn ?= new Date()
+    document.modifiedOn = new Date()
+    callback()
+  
+  return
+```
 
 Want more examples? Check out the tests folder or just fill out an issue and ask. 
 
