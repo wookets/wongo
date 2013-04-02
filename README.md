@@ -4,6 +4,9 @@ Wongo is an ODM-like library intended to simplify working with mongodb. The inte
 
 * [Installation](#installation)
 * [Usage](#usage)
+* [Schema](#schema)
+* [Middleware](#middleware)
+* [Populate](#populate)
 
 ## Installation
 ```
@@ -79,6 +82,7 @@ Supported Property Types:
 * ObjectID
 * Array
 
+### A 'complete' schema
 ```coffeescript
 wongo.schema = 'Mock',
   fields:                                            # fields acts just like the normal mongoose schema
@@ -106,6 +110,7 @@ wongo.schema = 'Mock',
 ```
 
 ## Validation
+Validation should hold feature parity with mongoose.js 
 
 ## Middleware
 
