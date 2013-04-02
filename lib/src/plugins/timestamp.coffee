@@ -13,5 +13,3 @@ module.exports = (schema, options) ->
     document.createdOn ?= new Date()
     document.modifiedOn = new Date()
     callback()
-  
-  return

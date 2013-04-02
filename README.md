@@ -1,6 +1,6 @@
 # Wongo
 
-Wongo is an ODM-like library intended to simplify working with mongodb. The intent is to have feature parity with mongoosejs, but simplier and cleaner.
+Wongo is an ODM-like library intended to simplify working with mongodb. The intent is to have feature parity with mongoosejs, but simplier and cleaner. Part of that simplicity is only supporting three crud methods; save, remove, and find which should cover 99% of use cases. Of course, if you want to get down and dirty, the native mongodb driver is exposed. 
 
 * [Installation](#installation)
 * [Usage](#usage)
