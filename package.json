@@ -1,6 +1,6 @@
 {
   "name": "wongo", 
-  "description": "A thin wrapper for mongodb",
+  "description": "A simple ODM for mongodb",
   "main": "./lib/wongo",
   "author": "wookets",
   "version": "0.5.5", 
