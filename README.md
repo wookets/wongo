@@ -16,9 +16,13 @@ npm install wongo
 
 ## Usage
 
-### Connect to the database
+### Require the module
 ```coffeescript
 wongo = require 'wongo'
+```
+
+### Connect to the database
+```coffeescript
 wongo.connect(url)
 ```
 
@@ -65,7 +69,7 @@ wongo.find 'Mock', query, (err, docs) -> # docs is a raw json array of objects
 ```coffeescript
 document = {_id: 'uniqueId'}
 wongo.remove 'Mock', document, (err) -> # doc has been removed
-
+```
 ### Remove a document by _id
 ```coffeescript
 documentId = 'uniqueId'
@@ -79,9 +83,13 @@ Supported Property Types:
 * Number
 * Date
 * Boolean
-* 'mixed' || 'any'
 * ObjectID
 * Array
+
+Setting a {type: 'mixed'} on a schema field wongo will just assume you are going to handle the type. 
+This means, pruning will leave the field, it will not look for validation, or otherstuff. 'mixed' is just an 
+example, you could name it anything and then write a plugin which will do something with it. Or extend 
+the validator to validate against it. 
 
 ### A 'complete' schema
 ```coffeescript
@@ -96,7 +104,7 @@ wongo.schema = 'Mock',
   
   hooks:                                          # participate in middleware
     beforeSave: (document, schema, next) ->       # document is a json doc
-    beforeAfter: (document, schema, next) ->      # note, this allows async unlike mongoose
+    afterSave: (document, schema, next) ->        # note, this allows async unlike mongoose
     validate: (document, schema, next) ->         # we can even override wongo's validation with our own
     prune: false                                  # or set the pruner to false if we dont want wongo to trim our documents
     beforeFind: (query, schema, next) ->          # modify a find query before it is run
@@ -149,6 +157,27 @@ is pushed into an array when the schema is registered. So, post schema registrat
 add more middleware, you need to add it directly to the array. Examples of this are shown in the plugins
 module. 
 
+### Hooks defined on the schema
+```coffeescript
+wongo.schema = 'Mock',
+  hooks:                                          
+    beforeSave: (document, schema, next) ->       
+    afterSave: (document, schema, next) ->        # add your own handler for what happens after a save
+    validate: true                                # will use default wongo validator
+    prune: false                                  # turns off the wongo pruner
+    beforeFind: (query, schema, next) ->          
+    afterFind: (query, schema, documents, next) ->
+    beforeRemove: (document, schema, next) ->
+    afterRemove: (document, schema, next) ->
+```
+
+### Hooks defined globally
+These will override internal wongo middleware, but won't override locally defined middleware. 
+```coffeescript
+wongo.options.prune = false
+wongo.options.validate = (document, schema, callback) ->
+  # implement your own validate method for all your schemas
+```
 
 ## Populate
 
