@@ -5,6 +5,7 @@ Wongo is an ODM-like library intended to simplify working with mongodb. The inte
 * [Installation](#installation)
 * [Usage](#usage)
 * [Schema](#schema)
+* [Queries](#queries)
 * [Middleware](#middleware)
 * [Populate](#populate)
 
@@ -109,10 +110,45 @@ wongo.schema = 'Mock',
   ]
 ```
 
-## Validation
+### Validation
 Validation should hold feature parity with mongoose.js 
 
+
+## Queries
+There are four support find methods:
+* find(_type, query, callback)
+* findOne(_type, query, callback)
+* findById(_type, _id, callback)
+* findByIds(_type, _ids, callback)
+
+### The query object
+```
+query = {select: '_id name', where: {name: 'Moo'}, limit: 5}
+```
+The query object has the following top-level properties.
+* select
+* where
+* sort
+* limit
+* skip
+* populate
+
+If 'where' isn't found, wongo wraps the query object in a where statement. 
+```
+query = {name: 'Boo'}
+```
+is equivalent to 
+```
+query = {where: {name: 'Boo'}}
+```
+
+
 ## Middleware
+Middleware is defined on the schema (under the hooks property) or in the wongo.options. Middleware
+is pushed into an array when the schema is registered. So, post schema registration, if you want to 
+add more middleware, you need to add it directly to the array. Examples of this are shown in the plugins
+module. 
+
 
 ## Populate
 
