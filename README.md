@@ -158,6 +158,7 @@ is pushed into an array when the schema is registered. So, post schema registrat
 add more middleware, you need to add it directly to the array. Examples of this are shown in the plugins
 module. 
 
+
 ### Hooks defined on the schema
 ```coffeescript
 wongo.schema = 'Mock',
@@ -180,11 +181,19 @@ wongo.options.validate = (document, schema, callback) ->
   # implement your own validate method for all your schemas
 ```
 
+### Bundled Middleware (enabled by default)
+* applyDefaults - Will allow you define 'default:' on your schemas and apply it beforeSave.
+* prune - aka mongoose 'strict' mode. Will remove any properties from objects not defined on your schema.
+* generateSubdocIds - Will generate ObjectIDs for subdocuments like mongoose does.
+* validate - Will validate a document against a schema before saving.
+* populate - Adds afterFind support for running more queries to populate properties
+
 ## Populate
 
 ## Plugins
 Plugins work similar to mongoose, though they aren't compatible, because the schema object will be different. 
 
+### Plugin example
 Here is an example of a plugin which adds createdOn and modifiedOn to the schema and also 
 adds before middleware save functionality. Note, that unshift is used to apply the middleware before
 validation. 
@@ -204,9 +213,14 @@ module.exports = (schema, options) ->
     document.createdOn ?= new Date()
     document.modifiedOn = new Date()
     callback()
-  
-  return
 ```
+
+### Bundled Plugins (not enabled by default)
+* timestamp - Adds createdOn and modifiedOn and adds beforeSave middleware
+* nestedset - Adds lft, rgt, parentId to a schema and adds query functions to the wongo object
+
+
+## More Examples?
 
 Want more examples? Check out the tests folder or just fill out an issue and ask. 
 
