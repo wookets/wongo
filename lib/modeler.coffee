@@ -116,6 +116,12 @@ setupMiddleware = (schema) ->
   beforeFind = options.beforeFind if _.isUndefined(beforeFind)
   if _.isFunction(beforeFind) 
     schema.middleware.beforeFind.push(beforeFind)
+  # populate
+  populate = schema.hooks?.populate
+  populate = options.populate if _.isUndefined(populate)
+  populate = hooks.populate if populate is true
+  if _.isFunction(populate)
+    schema.middleware.afterFind.push(populate)
   # after find
   afterFind = schema.hooks?.afterFind
   afterFind = options.afterFind if _.isUndefined(afterFind)

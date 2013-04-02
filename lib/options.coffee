@@ -1,14 +1,13 @@
 
-hooks = require __dirname + '/hooks'
-
 #
 # These are the default options and config for wongo
 #
 module.exports = 
-  prune: hooks.prune
-  applyDefaults: hooks.applyDefaults
-  validate: hooks.validate
-  generateSubdocIds: hooks.generateSubdocIds
+  prune: true
+  applyDefaults: true
+  validate: true
+  generateSubdocIds: true
   #loadDocumentBeforeRemove: hooks.loadDocumentBeforeRemove
+  populate: true
   
 

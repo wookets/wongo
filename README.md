@@ -1,8 +1,6 @@
 # Wongo
 
-Wongo is a mongodb wrapper intended to simplify working with the database. The intent is to have feature parity with mongoose where it makes sense.
-
-It is written in coffeescript *cringe*, but does have over 60 mocha tests with more being added everyday. Previous versions were based on mongoose, but I have since taken to coding directly against native mongodb driver.
+Wongo is an ODM-like library intended to simplify working with mongodb. The intent is to have feature parity with mongoosejs, but simplier and cleaner.
 
 ## Installation
 ```
@@ -51,36 +49,44 @@ wongo.schema = 'Mock',
 ### Save a document 
 ```coffeescript
 doc = {name: 'Woof'}
-wongo.save 'Mock', doc, (err, result) ->
-  # result is the saved raw json object
+wongo.save 'Mock', doc, (err, result) -> # result is the saved raw json object
+```
+
+### Save a lot of documents
+```coffeescript
+wongo.save 'Mock', documents, (err, result) -> # result is the saved json object array
 ```
 
 ### Update a document
 ```coffeescript
-partialDoc = {name: 'Wallace'}
+partialDoc = {_id: '5', name: 'Wallace'}
 where = {name: 'Gromit'}
-wongo.save 'Mock', partialDoc, where, (err, result) ->
-  # since we used a 'where' 
+wongo.save 'Mock', partialDoc, where, (err, result) -> 
+```
+
+### Update a lot of documents
+```coffeescript
+documents = [{},{},{}]
+where = {accountId: '65'}
+wongo.save 'Mock', documents, where, (err, result) -> 
 ```
 
 ### Find documents
 ```coffeescript
-# find example
 query = {name: 'mint'}
-wongo.find 'Mock', query, (err, docs) ->
-  # docs is a raw json array of objects
+wongo.find 'Mock', query, (err, docs) -> # docs is a raw json array of objects
 ```
 
 ### Remove a document
 ```coffeescript
-# remove by _id example (still partakes in remove middleware)
-documentId = 'uniqueId'
-wongo.remove 'Mock', documentId, (err) ->
-  # doc has been removed
 # remove by doc example
 document = {_id: 'uniqueId'}
-wongo.remove 'Mock', document, (err) ->
-  # doc has been removed
+wongo.remove 'Mock', document, (err) -> # doc has been removed
+
+### Remove a document by _id
+# remove by _id example (still partakes in remove middleware)
+documentId = 'uniqueId'
+wongo.remove 'Mock', documentId, (err) -> # doc has been removed
 ```
 
 Want more examples? Check out the tests folder or just fill out an issue and ask. 

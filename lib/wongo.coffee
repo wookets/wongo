@@ -40,7 +40,6 @@ exports.prune = hooks.prune
 crud = require __dirname + '/crud'
 exports.save = crud.save
 exports.remove = crud.remove
-exports.removeAll = crud.removeAll
 exports.clear = crud.clear
 exports.find = crud.find
 exports.findOne = crud.findOne
