@@ -25,25 +25,22 @@ wongo.schema = 'Mock',
 ### or define a more complex schema
 ```coffeescript
 wongo.schema = 'Mock',
-  fields:                                 # fields acts just like the normal mongoose schema
+  fields:                                         # fields acts just like the normal mongoose schema
     name: {type: String}
-    embeddedArray: [                      # embedded docs and everything are just like mongoose
+    embeddedArray: [                              # embedded docs and everything are just like mongoose
       name: String
     ]
     createdOn: {type: Date, required: true}
   
-  hooks:                                  # participate in middleware
-    save: 
-      before: (document, next) ->         # document is a json doc
-      after: (document, next) ->          # note, this allows async unlike mongoose
-      validate: (document, schema) ->     # we can even override wongo's validation with our own
-      prune: false                        # or set the pruner to false if we dont want wongo to trim our documents
-    find: 
-      before: (query, next) ->            # modify a find query before it is run
-      after: (documents, next) ->         # after we find a group of documents, we can do something with them
-    remove: 
-      before: (document, next) ->
-      after: (document, next) ->
+  hooks:                                          # participate in middleware
+    beforeSave: (document, schema, next) ->       # document is a json doc
+    beforeAfter: (document, schema, next) ->      # note, this allows async unlike mongoose
+    validate: (document, schema, next) ->         # we can even override wongo's validation with our own
+    prune: false                                  # or set the pruner to false if we dont want wongo to trim our documents
+    beforeFind: (query, schema, next) ->          # modify a find query before it is run
+    afterFind: (query, schema, documents, next) -># after we find a group of documents, we can do something with them
+    beforeRemove: (document, schema, next) ->
+    afterRemove: (document, schema, next) ->
     
   indexes: [                              # add standard mongodb compliant indices
     {name: 1}
