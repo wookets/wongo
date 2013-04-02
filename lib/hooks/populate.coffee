@@ -1,20 +1,24 @@
 
 _ = require 'underscore'
+async = require 'async'
+
+crud = require __dirname + '/../crud'
 
 #
 # Allows users to specify a populate option in a query object 
 #
 module.exports = (query, schema, documents, callback) ->
-  callback()
+  if not query.populate then return callback()
+  runPopulateQueries(schema.fields, query.populate, documents, callback)
 
 #
 # Pop queries
 #
-run_populate_queries = (schema, populate, docs, callback) ->
+runPopulateQueries = (schema, populate, docs, callback) ->
   if _.isString(populate) then populate = [populate] # string support
   #console.log 'pop'
   #console.log schema
-  async.each populate, (pop, nextInLoop) -> # run some async queries to populate our model
+  async.forEach populate, (pop, nextInLoop) -> # run some async queries to populate our model
     #console.log pop
     pop_type = null
     pop_prop = null
@@ -41,7 +45,7 @@ run_populate_queries = (schema, populate, docs, callback) ->
         _ids.push(doc[pop_prop])
     
     # we need to query for each pop type based on assembled _ids
-    exports.find pop_type, {where: {_id: {$in: _ids}}}, (err, pop_docs) ->
+    crud.find pop_type, {where: {_id: {$in: _ids}}}, (err, pop_docs) ->
       if err then return nextInLoop(err)
       for doc in docs # assign back to doc 
         for pop_doc in pop_docs

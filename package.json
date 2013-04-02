@@ -3,7 +3,7 @@
   "description": "A thin wrapper for mongodb",
   "main": "./lib/wongo",
   "author": "wookets",
-  "version": "0.5.3", 
+  "version": "0.5.4", 
   "repository": {
     "type": "git",
     "url": "http://github.com/wookets/wongo.git"

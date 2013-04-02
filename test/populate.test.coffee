@@ -13,7 +13,7 @@ wongo.schema 'MockPost',
     author_ref: {type: String, ref: 'MockAuthor', populateAlias: 'author'}
 
 
-describe.skip 'Wongo Populate', ->
+describe 'Wongo Populate', ->
     
   author = {name: 'MeowMan'}
   posts = [
