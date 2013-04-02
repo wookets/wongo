@@ -10,13 +10,13 @@ options = require __dirname + '/options'
 #
 exports.schemas = schemas = {}
 exports.schema = (_type, schema) ->
-  if not _type or not _.isString(_type) then throw Error('_type required.')
+  if not _type or not _.isString(_type) then throw new Error('_type required.')
   
   if not schema 
-    if not schemas[_type] then throw Error('_type [' + _type + '] not recognized')
+    if not schemas[_type] then throw new Error('_type [' + _type + '] not recognized')
     return schemas[_type]
   
-  if not schema.fields or _.isEmpty(schema.fields) then throw Error('We need to have some sort of schema or whats the point?')
+  if not schema.fields or _.isEmpty(schema.fields) then throw new Error('We need to have some sort of schema or whats the point?')
   
   # normalize schema 
   normalize(schema.fields)
@@ -34,7 +34,7 @@ exports.schema = (_type, schema) ->
   applyPlugins(schema)
   
   # ensure indexes
-  ensureIndexes(schema)
+  ensureIndexes(_type, schema)
   
   # register schema
   schemas[_type] = schema
@@ -146,6 +146,7 @@ setupMiddleware = (schema) ->
   if _.isFunction(afterRemove) 
     schema.middleware.afterRemove.push(afterRemove)
 
+
 #
 # This method will call any passed in plugins, which are just functions that receive the schema and any options
 #
@@ -156,16 +157,17 @@ applyPlugins = (schema) ->
     else # [function]
       plugin(schema)
 
+
 #
 # ensure our indexes as defined on the schema are created
 #
-ensureIndexes = (schema) ->
+ensureIndexes = (_type, schema) ->
   for index in schema.indexes ? []
     mongo.ifConnected () ->
       if _.isArray(index) 
-        mongo.db.ensureIndex(_type, index[0], index[1], (err, result) -> if err then throw err)
+        mongo.db.ensureIndex(_type, index[0], index[1], (err) -> if err then throw err)
       else 
-        mongo.db.ensureIndex(_type, index, (err, result) -> if err then throw err)
+        mongo.db.ensureIndex(_type, index, (err) -> if err then throw err)
 
 
     

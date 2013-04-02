@@ -15,8 +15,8 @@ mongo = require __dirname + '/../mongo'
 exports.find = (_type, query, callback) ->
   # validate incoming params
   schema = modeler.schema(_type)
-  if not callback or not _.isFunction(callback) then throw Error('callback required.') 
-  if not query or not _.isObject(query) then return callback(Error('query required.')) 
+  if not callback or not _.isFunction(callback) then throw new Error('callback required.') 
+  if not query or not _.isObject(query) then return callback(new Error('query required.')) 
   if not query.where then query = {where: query} # if 'where' isnt present, automatically nest
   documents = []
   async.series [
@@ -65,6 +65,7 @@ exports.findByIds = (_type, _ids, callback) ->
 #
 convertIdsInWhere = (where) ->
   if where._id?.$in
-    where._id.$in = (ObjectID(_id) for _id in where._id.$in)
+    where._id.$in = (new ObjectID(_id) for _id in where._id.$in)
   else if where._id
-    where._id = ObjectID(where._id)
+    where._id = new ObjectID(where._id)
+  return

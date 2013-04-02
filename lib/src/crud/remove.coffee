@@ -15,8 +15,8 @@ find = require __dirname + '/find'
 exports.remove = (_type, documentOrId, callback) ->
   # validate incoming params
   schema = modeler.schema(_type)
-  if not callback or not _.isFunction(callback) then throw Error('callback required.')
-  if not documentOrId or _.isEmpty(documentOrId) then throw Error('documentOrId required.')
+  if not callback or not _.isFunction(callback) then throw new Error('callback required.')
+  if not documentOrId or _.isEmpty(documentOrId) then throw new Error('documentOrId required.')
   if _.isString(documentOrId) then _id = documentOrId else document = documentOrId
   # add support for removing multiple documents
   if _.isArray(documentOrId)
@@ -41,7 +41,7 @@ exports.remove = (_type, documentOrId, callback) ->
         next(err)
     (next) -> # remove
       collection = mongo.collection(_type)
-      collection.remove {_id: ObjectID(document._id)}, {w:1}, (err, result) ->
+      collection.remove {_id: new ObjectID(document._id)}, {w:1}, (err) ->
         next(err)
     (next) -> # after remove
       async.eachSeries schema.middleware.afterRemove, (func, nextInLoop) ->
@@ -58,7 +58,7 @@ exports.remove = (_type, documentOrId, callback) ->
 exports.clear = (_type, callback) ->
   # validate incoming params
   schema = modeler.schema(_type)
-  if not callback or not _.isFunction(callback) then throw Error('callback required.')
+  if not callback or not _.isFunction(callback) then throw new Error('callback required.')
   async.series [
     (next) -> # make sure we are connected to the db
       mongo.ifConnected(next)

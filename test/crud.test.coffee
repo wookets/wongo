@@ -25,7 +25,7 @@ describe 'Wongo CRUD', ->
       assert.equal(result.name, 'Moo')
       done()
   
-  it 'should be able to update a minified document', (done) ->
+  it 'should be able to save a partial document', (done) ->
     mini_doc = {_id: doc._id, field2: 'mantis'}
     wongo.save 'Mock', mini_doc, (err, result) ->
       assert.ifError(err)

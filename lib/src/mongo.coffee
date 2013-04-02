@@ -20,6 +20,7 @@ exports.connect = (url) ->
   MongoClient.connect url, (err, opened_db) ->
     if err then throw err
     exports.db = opened_db
+    return
 
 
 #
@@ -34,15 +35,15 @@ exports.ifConnected = (callback) ->
       callback()
     else if attempts is 20 # after 5 seconds a waiting, tell user to connect()
       clearInterval(waitForDb)
-      return callback(Error('We waited and waited but the database is no where to be found. Did you use connect(url)?'))
+      return callback(new Error('We waited and waited but the database is no where to be found. Did you use connect(url)?'))
     else
       attempts += 1
   , 250 # recheck every 250ms
-
+  return
 
 #
 # Collection
 #
 exports.collection = (_type) ->
-  if not _type or not _.isString(_type) then throw Error('_type required.')
+  if not _type or not _.isString(_type) then throw new Error('_type required.')
   return exports.db.collection(_type)

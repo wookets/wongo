@@ -18,8 +18,8 @@ exports.save = (_type, document, where, callback) ->
   # validate incoming params before doing anything
   schema = modeler.schema(_type)
   if _.isFunction(where) then callback = where; where = {}
-  if not callback or not _.isFunction(callback) then throw Error('callback required.')
-  if not document or not _.isObject(document) or _.isEmpty(document) then throw Error('document required.')
+  if not callback or not _.isFunction(callback) then throw new Error('callback required.')
+  if not document or not _.isObject(document) or _.isEmpty(document) then throw new Error('document required.')
   # add primative support for saving multiple documents
   if _.isArray(document)
     async.each document, (doc, nextInLoop) ->

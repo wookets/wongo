@@ -10,12 +10,12 @@ module.exports = (document, schema, callback) ->
     for own prop, val of document
       continue if prop is '_id'
       result = validateField(document, prop, schema.fields[prop])
-      if _.isString(result) then return callback(Error(result))
+      if _.isString(result) then return callback(new Error(result))
   else # validate all properties on schema
     for own field, meta of schema.fields
       if prop is '_id' then continue
       result = validateField(document, field, meta)
-      if _.isString(result) then return callback(Error(result))
+      if _.isString(result) then return callback(new Error(result))
   callback()
 
 validateField = (document, field, meta) ->
