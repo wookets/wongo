@@ -12,7 +12,6 @@ wongo.schema 'MockPost',
     name: String
     author_ref: {type: String, ref: 'MockAuthor', populateAlias: 'author'}
 
-
 describe 'Wongo Populate', ->
     
   author = {name: 'MeowMan'}
@@ -37,11 +36,9 @@ describe 'Wongo Populate', ->
       done()
   
   it 'should be able to save author posts', (done) ->
-    #console.log author
     author.postIds ?= []
     author.postIds.push(post._id) for post in posts
     wongo.save 'MockAuthor', author, (err, result) ->
-      #console.log result
       assert.ifError(err)
       assert.equal(result.postIds?.length, 2)
       done()
@@ -50,7 +47,6 @@ describe 'Wongo Populate', ->
     query = {where: {}, populate: 'posts'}
     wongo.find 'MockAuthor', query, (err, result) ->
       assert.ifError(err)
-      #console.log 'result', result
       assert.equal(result[0].posts[0].name, 'Woof Woof No More!')
       assert.equal(result[0].posts[1].name, 'Kitty Kat Get Back')
       done()
