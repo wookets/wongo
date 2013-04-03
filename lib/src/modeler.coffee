@@ -17,7 +17,7 @@ exports.schema = (_type, schema) ->
     return schemas[_type]
   
   if not schema.fields or _.isEmpty(schema.fields) then throw new Error('We need to have some sort of schema or whats the point?')
-  
+
   # normalize schema 
   normalize(schema.fields)
 
@@ -29,7 +29,7 @@ exports.schema = (_type, schema) ->
 
   # read in hooks and add to middleware
   setupMiddleware(schema)
-
+  
   # plugin support
   applyPlugins(schema)
   
