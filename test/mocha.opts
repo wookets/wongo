@@ -1,5 +1,5 @@
 --compilers coffee:coffee-script
---reporter spec
+--reporter dot
 --ui bdd
 --timeout 5000
 --slow 150

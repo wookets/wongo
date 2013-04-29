@@ -4,10 +4,11 @@ wongo = require '../lib/wongo'
 wongo.schema 'MockFind', 
   fields: 
     name: String
+    selectField: String
 
 describe 'Wongo Find', ->
     
-  docs = [{name: 'Meow'}, {name: 'Boo'}, {name: 'Fran'}, {name: 'Kitty'}, {name: 'Woof'}]
+  docs = [{name: 'Meow'}, {name: 'Boo', selectField: 'Cow'}, {name: 'Fran'}, {name: 'Kitty'}, {name: 'Woof'}]
   
   it 'should be able to save all documents', (done) ->
     wongo.save 'MockFind', docs, (err, result) ->
@@ -43,7 +44,15 @@ describe 'Wongo Find', ->
       assert.equal(result.length, 1)
       assert.equal(result[0].name, 'Fran')
       done()
-  
+
+  it 'should be able to find select fields on document', (done) ->
+    query = {select: 'name', where: {name: 'Boo'}}
+    wongo.findOne 'MockFind', query, (err, result) ->
+      assert.ifError(err)
+      assert.equal(result.name, 'Boo')
+      assert.ok(not result.selectField)
+      done()
+
   it 'should be able to find documents by name with where', (done) ->
     query = {where: {name: 'Fran'}}
     wongo.find 'MockFind', query, (err, result) ->

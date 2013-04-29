@@ -28,17 +28,15 @@ exports.find = (_type, query, callback) ->
       , (err) ->
         next(err)
     (next) -> # execute find
-      convertIdsInWhere(query.where) # convert _id String to ObjectID (if needed)
+      where = convertWhereForMongo(query.where) # convert _id String to ObjectID (if needed)
+      select = convertSelectForMongo(query.select) # convert select statement
       options = {sort: query.sort, limit: query.limit, skip: query.skip} # setup options for query
       collection = mongo.collection(_type)
-      collection.find(query.where, query.select, options).toArray (err, result) ->
+      collection.find(where, select, options).toArray (err, result) ->
         if err then return next(err, result)
         doc._id = String(doc._id) for doc in result when doc._id # support for changing ObjectID into String
         documents = result
         next(null)
-#     (documents, next) -> # execute any populates
-#       return run_populate_queries(schema.fields, query.populate, documents, next) if query.populate # support for populate
-#       next(null, documents)
     (next) -> # after find middleware
       async.eachSeries schema.middleware.afterFind, (func, nextInLoop) ->
         func(query, schema, documents, nextInLoop)
@@ -63,9 +61,22 @@ exports.findByIds = (_type, _ids, callback) ->
 #
 # convert ids in where to ObjectID
 #
-convertIdsInWhere = (where) ->
+convertWhereForMongo = (where) ->
   if where._id?.$in
     where._id.$in = (new ObjectID(_id) for _id in where._id.$in)
   else if where._id
     where._id = new ObjectID(where._id)
-  return
+  return where
+
+
+#
+# convert select string to object select (so mongo can understand what we are doing)
+#
+convertSelectForMongo = (select) ->
+  if _.isString(select)
+    selectString = select
+    fields = select.split(' ')
+    select = {}
+    for field in fields
+      select[field] = true
+  return select
