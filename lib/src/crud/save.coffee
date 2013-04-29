@@ -37,7 +37,7 @@ exports.save = (_type, document, where, callback) ->
       , (err) ->
         next(err)
     (next) -> # execute save
-      collection = mongo.collection(_type)
+      collection = mongo.collection(schema.collectionName or _type)
       if not document._id
         collection.insert document, {w:1}, (err, result) ->
           document._id = String(result[0]._id)

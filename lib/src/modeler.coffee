@@ -38,7 +38,7 @@ exports.schema = (_type, schema) ->
   
   # register schema
   schemas[_type] = schema
-  
+
   return schema
 
 
