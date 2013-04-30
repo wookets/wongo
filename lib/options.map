@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "options.js",
+  "sourceRoot": "",
+  "sources": [
+    "options.coffee"
+  ],
+  "names": [],
+  "mappings": ";;AAIA;CAAA;CAAA,CAAA,CACC,GADK,CAAN;CACC,CAAQ,EAAP,CAAA;CAAD,CACgB,EAAf,SAAA;CADD,CAEW,EAAV,IAAA;CAFD,CAGoB,EAAnB,aAAA;CAHD,CAKW,EAAV,IAAA;CANF,GAAA;CAAA"
+}
