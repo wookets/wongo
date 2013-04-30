@@ -61,7 +61,7 @@ exports.findByIds = (_type, _ids, callback) ->
 #
 # convert where statement for mongo to understand
 #
-convertWhereForMongo = (where) ->
+convertWhereForMongo = (where, schema) ->
   # convert _id in where to ObjectID
   if where._id?.$in
     where._id.$in = (new ObjectID(_id) for _id in where._id.$in when _.isString(_id))

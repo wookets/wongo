@@ -1,7 +1,7 @@
 #
 # The raw MongoDb object
 #
-exports.mongodb = require 'mongodb'
+exports.mongodb = mongodb = require 'mongodb'
 exports.ObjectID = mongodb.ObjectID
 
 #
