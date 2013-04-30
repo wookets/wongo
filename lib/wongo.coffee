@@ -1,4 +1,9 @@
 #
+# The raw MongoDb object
+#
+exports.mongodb = require 'mongodb'
+
+#
 # Mongo / Connection
 #
 mongo = require(__dirname + '/mongo')
