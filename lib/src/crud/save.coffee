@@ -37,7 +37,7 @@ exports.save = (_type, document, where, callback) ->
       , (err) ->
         next(err)
     (next) -> # execute save
-      collection = mongo.collection(schema.collectionName or _type)
+      collection = mongo.collection(schema.collectionName)
       if not document._id
         collection.insert document, {w:1}, (err, result) ->
           document._id = String(result[0]._id)
@@ -46,7 +46,7 @@ exports.save = (_type, document, where, callback) ->
         _id = ObjectID(document._id)
         where._id = _id
         delete document._id
-        collection.update where, {$set: document}, {safe: true, w:1}, (err) ->
+        collection.update where, {$set: document}, {safe: true, w:1}, (err) -> # updates allow partial doc saves
           document._id = String(_id)
           next(err)
     (next) -> # run after save middleware array

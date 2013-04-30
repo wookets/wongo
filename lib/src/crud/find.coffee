@@ -31,7 +31,7 @@ exports.find = (_type, query, callback) ->
       where = convertWhereForMongo(query.where) # convert _id String to ObjectID (if needed)
       select = convertSelectForMongo(query.select) # convert select statement
       options = {sort: query.sort, limit: query.limit, skip: query.skip} # setup options for query
-      collection = mongo.collection(schema.collectionName or _type)
+      collection = mongo.collection(schema.collectionName)
       collection.find(where, select, options).toArray (err, result) ->
         if err then return next(err, result)
         doc._id = String(doc._id) for doc in result when doc._id # support for changing ObjectID into String

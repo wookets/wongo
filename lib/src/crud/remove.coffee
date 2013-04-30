@@ -40,7 +40,7 @@ exports.remove = (_type, documentOrId, callback) ->
       , (err) ->
         next(err)
     (next) -> # remove
-      collection = mongo.collection(schema.collectionName or _type)
+      collection = mongo.collection(schema.collectionName)
       collection.remove {_id: new ObjectID(document._id)}, {w:1}, (err) ->
         next(err)
     (next) -> # after remove

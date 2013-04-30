@@ -18,6 +18,9 @@ exports.schema = (_type, schema) ->
   
   if not schema.fields or _.isEmpty(schema.fields) then throw new Error('We need to have some sort of schema or whats the point?')
 
+  # define collectionName if not defined
+  schema.collectionName ?= _type
+
   # normalize schema 
   normalize(schema.fields)
 
@@ -165,9 +168,9 @@ ensureIndexes = (_type, schema) ->
   for index in schema.indexes ? []
     mongo.ifConnected () ->
       if _.isArray(index) 
-        mongo.db.ensureIndex(_type, index[0], index[1], (err) -> if err then throw err)
+        mongo.db.ensureIndex(schema.collectionName, index[0], index[1], (err) -> if err then throw err)
       else 
-        mongo.db.ensureIndex(_type, index, (err) -> if err then throw err)
+        mongo.db.ensureIndex(schema.collectionName, index, (err) -> if err then throw err)
 
 
     
