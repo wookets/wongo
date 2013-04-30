@@ -14,7 +14,7 @@ module.exports = (query, schema, documents, callback) ->
 #
 # Pop queries
 #
-runPopulateQueries = (schema, populate, docs, callback) ->
+runPopulateQueries = (fields, populate, docs, callback) ->
   if _.isString(populate) then populate = [populate] # string support
   #console.log 'pop'
   #console.log schema
@@ -22,17 +22,17 @@ runPopulateQueries = (schema, populate, docs, callback) ->
     #console.log pop
     pop_type = null
     pop_prop = null
-    for prop, val of schema or {}
+    for prop, val of fields or {}
       #console.log val
       if _.isArray(val) 
-        if val[0].populateAlias is pop 
+        if val[0].populateAlias is pop or pop is prop
           pop_type = val[0].ref
           pop_prop = prop
       else
-        if val.populateAlias is pop 
+        if val.populateAlias is pop or pop is prop
           pop_type = val.ref
           pop_prop = prop
-    
+
     #console.log pop_type
     if not pop_type then throw new Error('Populate property ' + pop + ' could not be found on schema.')
     
