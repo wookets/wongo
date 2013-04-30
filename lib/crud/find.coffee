@@ -28,7 +28,7 @@ exports.find = (_type, query, callback) ->
       , (err) ->
         next(err)
     (next) -> # execute find
-      where = convertWhereForMongo(query.where) # convert _id String to ObjectID (if needed)
+      where = convertWhereForMongo(query.where, schema) # convert _id String to ObjectID (if needed)
       select = convertSelectForMongo(query.select) # convert select statement
       options = {sort: query.sort, limit: query.limit, skip: query.skip} # setup options for query
       collection = mongo.collection(schema.collectionName)
@@ -59,13 +59,23 @@ exports.findByIds = (_type, _ids, callback) ->
 
 
 #
-# convert ids in where to ObjectID
+# convert where statement for mongo to understand
 #
 convertWhereForMongo = (where) ->
+  # convert _id in where to ObjectID
   if where._id?.$in
-    where._id.$in = (new ObjectID(_id) for _id in where._id.$in)
+    where._id.$in = (new ObjectID(_id) for _id in where._id.$in when _.isString(_id))
   else if where._id
-    where._id = new ObjectID(where._id)
+    if _.isString(where._id)
+      where._id = new ObjectID(where._id)
+  # convert any strings which need to be ObjectIDs
+  for own key, val of where
+    if schema.fields[key]?.type is ObjectID
+      if where[key]?.$in
+        where[key].$in = (new ObjectID(id) for id in where[key].$in when _.isString(_id))
+      else
+        if _.isString(where[key])
+          where[key] = new ObjectID(where[key])
   return where
 
 
