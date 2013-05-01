@@ -26,12 +26,28 @@
       author: {
         type: String,
         ref: 'MockAuthor'
-      }
+      },
+      author_id: {
+        type: wongo.ObjectID,
+        ref: 'MockAuthor'
+      },
+      comments: [
+        {
+          type: wongo.ObjectID,
+          ref: 'MockComment'
+        }
+      ]
+    }
+  });
+
+  wongo.schema('MockComment', {
+    fields: {
+      name: String
     }
   });
 
   describe('Wongo Populate', function() {
-    var author, posts;
+    var author, comments, posts;
     author = {
       name: 'MeowMan'
     };
@@ -40,6 +56,11 @@
         name: 'Woof Woof No More!'
       }, {
         name: 'Kitty Kat Get Back'
+      }
+    ];
+    comments = [
+      {
+        name: 'Lame internet comment'
       }
     ];
     it('should be able to save author', function(done) {
@@ -51,10 +72,14 @@
       });
     });
     it('should be able to save posts', function(done) {
-      var post, _i, _len;
+      var post, _i, _j, _len, _len1;
       for (_i = 0, _len = posts.length; _i < _len; _i++) {
         post = posts[_i];
         post.author = author._id;
+      }
+      for (_j = 0, _len1 = posts.length; _j < _len1; _j++) {
+        post = posts[_j];
+        post.author_id = author._id;
       }
       return wongo.save('MockPost', posts, function(err, result) {
         assert.ifError(err);
@@ -92,7 +117,7 @@
         return done();
       });
     });
-    return it('should be able to find posts and populate author', function(done) {
+    it('should be able to find posts and populate author', function(done) {
       var query;
       query = {
         where: {},
@@ -102,6 +127,19 @@
         assert.ifError(err);
         assert.equal(result[0].author.name, 'MeowMan');
         assert.equal(result[1].author.name, 'MeowMan');
+        return done();
+      });
+    });
+    return it('should be able to find posts and populate author ObjectID and replace', function(done) {
+      var query;
+      query = {
+        where: {},
+        populate: 'author_id'
+      };
+      return wongo.find('MockPost', query, function(err, result) {
+        assert.ifError(err);
+        assert.equal(result[0].author_id.name, 'MeowMan');
+        assert.equal(result[1].author_id.name, 'MeowMan');
         return done();
       });
     });
