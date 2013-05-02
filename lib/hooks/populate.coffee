@@ -23,7 +23,7 @@ module.exports = (query, schema, documents, callback) ->
       popArray.push({path: path})
   # support object mapping (with query options), imho cleaner than mongoose
   else
-    for own path, popQuery of query.propulate
+    for own path, popQuery of query.populate
       popArray.push({path: path, query: popQuery})
 
   # loop thru each populate, async to speed things along
@@ -52,7 +52,7 @@ module.exports = (query, schema, documents, callback) ->
     # we need to query for each pop type based on assembled _ids
     popQuery = pop.query or {}
     if not popQuery.where then popQuery = {where: popQuery} # if 'where' isnt present, automatically nest
-    popQuery.where = {_id: {$in: _ids}}
+    popQuery.where._id = {$in: _ids}
     crud.find pop_type, popQuery, (err, pop_docs) ->
       if err then return nextInLoop(err)
       # assign pop_docs to the original documents
