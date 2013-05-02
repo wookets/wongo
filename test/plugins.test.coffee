@@ -2,7 +2,6 @@ assert = require 'assert'
 wongo = require '../lib/wongo'
 _ = require 'underscore'
 
-
 wongo.schema 'MockPlugin', 
   fields:
     name: String

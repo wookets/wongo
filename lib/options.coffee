@@ -9,5 +9,6 @@ module.exports =
   generateSubdocIds: true
   #loadDocumentBeforeRemove: hooks.loadDocumentBeforeRemove
   populate: true
+  stringizeObjectID: true
   
 

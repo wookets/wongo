@@ -1,5 +1,9 @@
 
 _ = require 'underscore'
+mongodb = require 'mongodb'
+ObjectID = mongodb.ObjectID
+
+options = require __dirname + '/../options'
 
 #
 # Allow a user to run a validation on a document (or partial document)
@@ -39,3 +43,6 @@ validateField = (document, field, meta) ->
         if value and not _.isBoolean(value) then return field + ' needs to be a boolean.'
       when Date
         if value and not _.isDate(value) then return field + ' needs to be a date.'
+      when ObjectID
+        if options.stringizeObjectID then return # this will get ObjectID'd later...
+        if value and not _.isObject(value) then return field + ' needs to be an ObjectID.'

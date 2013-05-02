@@ -1,7 +1,6 @@
 assert = require 'assert'
 wongo = require '../lib/wongo'
 
-
 wongo.schema 'MockStrict', 
   fields: 
     name: String # simplest property

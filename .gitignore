@@ -1,6 +1,6 @@
 /node_modules/
 /test/config.coffee
+/test/config.js
 .DS_Store
 /.DS_Store
-/codekit-config.json
 .idea

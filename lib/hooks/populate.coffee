@@ -48,6 +48,7 @@ module.exports = (query, schema, documents, callback) ->
         _ids = _.union(doc[pop_prop], _ids)
       else 
         _ids.push(doc[pop_prop])
+    _ids = _.uniq(_ids) # we dont need any duplicates
     # we need to query for each pop type based on assembled _ids
     popQuery = pop.query or {}
     if not popQuery.where then popQuery = {where: popQuery} # if 'where' isnt present, automatically nest

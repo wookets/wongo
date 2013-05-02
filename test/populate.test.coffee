@@ -1,5 +1,6 @@
 
 assert = require 'assert'
+
 wongo = require '../lib/wongo'
 
 # schemas to test against

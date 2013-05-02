@@ -40,14 +40,13 @@ exports.save = (_type, document, where, callback) ->
       collection = mongo.collection(schema.collectionName)
       if not document._id
         collection.insert document, {w:1}, (err, result) ->
-          document._id = String(result[0]._id)
+          document._id = result[0]._id
           next(err)
-      else 
-        _id = ObjectID(document._id)
-        where._id = _id
+      else
+        where._id = document._id
         delete document._id
         collection.update where, {$set: document}, {safe: true, w:1}, (err) -> # updates allow partial doc saves
-          document._id = String(_id)
+          document._id = where._id
           next(err)
     (next) -> # run after save middleware array
       async.eachSeries schema.middleware.afterSave, (func, nextInLoop) ->

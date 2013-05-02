@@ -7,7 +7,7 @@ wongo.schema 'MockFind',
     selectField: String
 
 describe 'Wongo Find', ->
-    
+
   docs = [{name: 'Meow'}, {name: 'Boo', selectField: 'Cow'}, {name: 'Fran'}, {name: 'Kitty'}, {name: 'Woof'}]
   
   it 'should be able to save all documents', (done) ->

@@ -10,17 +10,17 @@ ObjectID = mongodb.ObjectID
 module.exports = (document, schema, callback) ->
   generateSubdocIds = (document, fields) -> # recursive inline function 8P 
     for own prop, val of document
-      if prop is '_id' then continue
-      if _.isUndefined(document[prop]) then continue
+      if prop is '_id' then continue # ignore _id because we know it will never be a subdoc
+      if _.isUndefined(val) or _.isEmpty(val) or _.isNull(val) then continue # ignore nulled properties
       meta = fields[prop]
       if _.isUndefined(meta) then continue # maybe the dev disabled prune!
       if _.isArray(meta) 
-        if not meta[0].type
+        if meta[0].type is 'SubDoc'
           for item in document[prop] or []
-            document[prop]._id ?= String(ObjectID())
+            document[prop]._id ?= ObjectID()
             generateSubdocIds(item, meta[0])
-      else if not meta.type
-        document[prop]._id ?= String(ObjectID())
+      else if meta.type is 'SubDoc'
+        document[prop]._id ?= ObjectID()
         generateSubdocIds(document[prop], meta)
   generateSubdocIds(document, schema.fields)
   callback()

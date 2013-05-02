@@ -1,7 +1,6 @@
 assert = require 'assert'
 wongo = require '../lib/wongo'
 
-
 wongo.schema 'MockValidation', 
   fields: 
     name: {type: String, required: true, min: 3, max: 12} # simplest property

@@ -28,13 +28,11 @@ exports.find = (_type, query, callback) ->
       , (err) ->
         next(err)
     (next) -> # execute find
-      where = convertWhereForMongo(query.where, schema) # convert _id String to ObjectID (if needed)
       select = convertSelectForMongo(query.select) # convert select statement
       options = {sort: query.sort, limit: query.limit, skip: query.skip} # setup options for query
       collection = mongo.collection(schema.collectionName)
-      collection.find(where, select, options).toArray (err, result) ->
-        if err then return next(err, result)
-        doc._id = String(doc._id) for doc in result when doc._id # support for changing ObjectID into String
+      collection.find(query.where, select, options).toArray (err, result) ->
+        if err then return next(err)
         documents = result
         next(null)
     (next) -> # after find middleware
@@ -56,27 +54,6 @@ exports.findById = (_type, _id, callback) ->
 
 exports.findByIds = (_type, _ids, callback) ->
   exports.find(_type, {_id: {$in: _ids}}, callback) 
-
-
-#
-# convert where statement for mongo to understand
-#
-convertWhereForMongo = (where, schema) ->
-  # convert _id in where to ObjectID
-  if where._id?.$in
-    where._id.$in = (new ObjectID(_id) for _id in where._id.$in when _.isString(_id))
-  else if where._id
-    if _.isString(where._id)
-      where._id = new ObjectID(where._id)
-  # convert any strings which need to be ObjectIDs
-  for own key, val of where
-    if schema.fields[key]?.type is ObjectID
-      if where[key]?.$in
-        where[key].$in = (new ObjectID(id) for id in where[key].$in when _.isString(_id))
-      else
-        if _.isString(where[key])
-          where[key] = new ObjectID(where[key])
-  return where
 
 
 #

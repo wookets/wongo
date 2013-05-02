@@ -22,8 +22,7 @@ exports.remove = (_type, documentOrId, callback) ->
   if _.isArray(documentOrId)
     async.each documentOrId, (docOrId, nextInLoop) ->
       exports.remove(_type, docOrId, nextInLoop)
-    , (err) -> 
-      callback(err)
+    , callback
     return
   # execute middleware and remove
   async.series [
@@ -41,8 +40,7 @@ exports.remove = (_type, documentOrId, callback) ->
         next(err)
     (next) -> # remove
       collection = mongo.collection(schema.collectionName)
-      collection.remove {_id: new ObjectID(document._id)}, {w:1}, (err) ->
-        next(err)
+      collection.remove({_id: new ObjectID(document._id)}, {w:1}, next)
     (next) -> # after remove
       async.eachSeries schema.middleware.afterRemove, (func, nextInLoop) ->
         func(document, schema, nextInLoop)

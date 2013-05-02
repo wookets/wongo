@@ -1,7 +1,6 @@
 assert = require 'assert'
 wongo = require '../lib/wongo'
 
-
 describe 'Wongo Schema', ->
   
   it 'should change String into type.String', (done) ->    
