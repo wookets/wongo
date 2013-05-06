@@ -40,8 +40,9 @@ exports.save = (_type, document, where, callback) ->
       collection = mongo.collection(schema.collectionName)
       if not document._id
         collection.insert document, {w:1}, (err, result) ->
+          if err then return next(err)
           document._id = result[0]._id
-          next(err)
+          next()
       else
         where._id = document._id
         delete document._id
