@@ -12,8 +12,8 @@ module.exports = (schema, options) ->
 
   schema.indexes ?= []
   schema.indexes.push({parentId: 1})
-  schema.indexes.push({lft: 1}, {unique: true})
-  schema.indexes.push({rgt: 1}, {unique: true})
+  schema.indexes.push([{lft: 1}, {unique: true}])
+  schema.indexes.push([{rgt: 1}, {unique: true}])
   
   ns = {}
   ns.setRoot = (_type, root, callback) ->
