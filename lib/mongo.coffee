@@ -15,9 +15,11 @@ exports.db = null
 
 #
 # Establish a connection to the database
+# @url is the url of the db to connect to
+# @options are the options available to set on mongodb
 #
-exports.connect = (url) ->
-  MongoClient.connect url, (err, opened_db) ->
+exports.connect = (url, options) ->
+  MongoClient.connect url, options, (err, opened_db) ->
     if err then throw err
     exports.db = opened_db
     return
