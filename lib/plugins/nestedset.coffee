@@ -17,10 +17,22 @@ module.exports = (schema, options) ->
   
   ns = {}
   ns.setRoot = (_type, root, callback) ->
-    root.parentId = null
-    root.lft = 1
-    root.rgt = 2
-    wongo.save(_type, root, callback)
+    async.waterfall [
+      # make sure root saves
+      (next) ->
+        root.parentId = null
+        root.lft = 1
+        root.rgt = 2
+        wongo.save(_type, root, next)
+      # wipe existing tree
+      (rootDoc, next) ->
+        where = {lft: {$gt: 2}}
+        values = {$unset: {lft: null, rgt: null}}
+        collection = wongo.collection(_type)
+        collection.update where, values, {multi: true}, (err) ->
+          next(err, rootDoc)
+    ], (err, rootDoc) ->
+      callback(err, rootDoc)
 
   ns.addNode = (_type, node, parentId, callback) ->
     wongo.findById _type, parentId, (err, parent) -> # find parent
