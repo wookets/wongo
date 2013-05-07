@@ -16,11 +16,11 @@
     plugins: [wongo.plugins.timestamp]
   });
 
-  wongo.schema('MockHierarchy', {
+  wongo.schema('MockTree', {
     fields: {
       name: String
     },
-    plugins: [wongo.plugins.nestedset]
+    plugins: [wongo.plugins.atree]
   });
 
   describe('Wongo Plugins', function() {
@@ -39,8 +39,8 @@
         return done();
       });
     });
-    it('should have attached nested set methods to wongo namespace', function(done) {
-      assert.ok(_.isFunction(wongo.ns.addNode));
+    it('should have attached ancestor tree methods to wongo namespace', function(done) {
+      assert.ok(_.isFunction(wongo.plugins.atree));
       return done();
     });
     root = null;
@@ -50,10 +50,9 @@
       root = {
         name: 'Root'
       };
-      return wongo.ns.setRoot('MockHierarchy', root, function(err, doc) {
-        root = doc;
-        assert.equal(doc.lft, 1);
-        assert.equal(doc.rgt, 2);
+      return wongo.save('MockTree', root, function(err, result) {
+        root = result;
+        assert.ok(_.isArray(root.ancestors));
         return done();
       });
     });
@@ -61,18 +60,11 @@
       child1 = {
         name: 'child1'
       };
-      return wongo.ns.addNode('MockHierarchy', child1, root._id, function(err, doc) {
+      child1.ancestors = [root._id];
+      return wongo.save('MockTree', child1, function(err, doc) {
         child1 = doc;
-        assert.equal(doc.lft, 2);
-        assert.equal(doc.rgt, 3);
-        return done();
-      });
-    });
-    it('should make sure root has been updated', function(done) {
-      return wongo.findById('MockHierarchy', root._id, function(err, doc) {
-        root = doc;
-        assert.equal(doc.lft, 1);
-        assert.equal(doc.rgt, 4);
+        assert.equal(doc.parent, root._id);
+        assert.equal(doc.ancestors[0], root._id);
         return done();
       });
     });
@@ -80,51 +72,36 @@
       child11 = {
         name: 'child11'
       };
-      return wongo.ns.addNode('MockHierarchy', child11, child1._id, function(err, doc) {
+      child11.ancestors = [root._id, child1._id];
+      return wongo.save('MockTree', child11, function(err, doc) {
         child11 = doc;
-        assert.equal(doc.lft, 3);
-        assert.equal(doc.rgt, 4);
-        return done();
-      });
-    });
-    it('should make sure child1 has been updated', function(done) {
-      return wongo.findById('MockHierarchy', child1._id, function(err, doc) {
-        child1 = doc;
-        assert.equal(doc.lft, 2);
-        assert.equal(doc.rgt, 5);
-        return done();
-      });
-    });
-    it('should make sure root has been updated', function(done) {
-      return wongo.findById('MockHierarchy', root._id, function(err, doc) {
-        root = doc;
-        assert.equal(doc.lft, 1);
-        assert.equal(doc.rgt, 6);
+        assert.equal(doc.parent, child1._id);
+        assert.equal(doc.ancestors[0], root._id);
+        assert.equal(doc.ancestors[1], child1._id);
         return done();
       });
     });
     it('should get all ascendants of child11', function(done) {
-      return wongo.ns.findAncestors('MockHierarchy', child11._id, function(err, ancestors) {
-        var ancestor, _i, _len;
-        assert.ok(ancestors);
-        assert.equal(ancestors.length, 2);
-        for (_i = 0, _len = ancestors.length; _i < _len; _i++) {
-          ancestor = ancestors[_i];
-          if (ancestor.name !== 'Root' && ancestor.name !== 'child1') {
-            assert.ok(false);
-          }
-        }
+      return wongo.findById('MockTree', child11._id, function(err, result) {
+        assert.ok(result);
+        assert.equal(result.ancestors.length, 2);
+        assert.equal(result.ancestors[0], root._id);
+        assert.equal(result.ancestors[1], child1._id);
         return done();
       });
     });
     it('should get all descendants of root', function(done) {
-      return wongo.ns.findDescendants('MockHierarchy', root._id, function(err, descendants) {
-        var descendant, _i, _len;
-        assert.ok(descendants);
-        assert.equal(descendants.length, 2);
-        for (_i = 0, _len = descendants.length; _i < _len; _i++) {
-          descendant = descendants[_i];
-          if (descendant.name !== 'child11' && descendant.name !== 'child1') {
+      var query;
+      query = {
+        ancestors: root._id
+      };
+      return wongo.find('MockTree', query, function(err, result) {
+        var child, _i, _len;
+        assert.ok(result);
+        assert.equal(result.length, 2);
+        for (_i = 0, _len = result.length; _i < _len; _i++) {
+          child = result[_i];
+          if (child.name !== 'child1' && child.name !== 'child11') {
             assert.ok(false);
           }
         }
@@ -132,31 +109,29 @@
       });
     });
     it('should get all children of root', function(done) {
-      return wongo.ns.findChildren('MockHierarchy', root._id, function(err, children) {
-        assert.ok(children);
-        assert.equal(children.length, 1);
-        assert.equal(children[0].name, 'child1');
+      var query;
+      query = {
+        parent: root._id
+      };
+      return wongo.find('MockTree', query, function(err, result) {
+        assert.ok(result);
+        assert.equal(result.length, 1);
+        assert.equal(result[0].name, child1.name);
+        assert.equal(result[0].parent, root._id);
+        assert.equal(result[0].ancestors[0], root._id);
         return done();
       });
     });
-    it('should try to remove child1 and fail', function(done) {
-      return wongo.ns.removeNode('MockHierarchy', child1._id, function(err) {
-        assert.equal(err != null ? err.message : void 0, 'Can not remove a node that has children.');
-        return done();
-      });
-    });
-    it('should remove child11', function(done) {
-      return wongo.ns.removeNode('MockHierarchy', child11._id, function(err) {
+    it('should try to remove child1 and remove child11', function(done) {
+      return wongo.remove('MockTree', child1._id, function(err) {
         assert.ok(!err);
-        return wongo.ns.findDescendants('MockHierarchy', child1._id, function(err, descendants) {
-          assert.equal(descendants != null ? descendants.length : void 0, 0);
-          return done();
-        });
+        return done();
       });
     });
-    return it('should not remove a child that is not in the tree', function(done) {
-      return wongo.ns.removeNode('MockHierarchy', child11._id, function(err) {
-        assert.equal(err != null ? err.message : void 0, 'Can not remove a node not in the nested set.');
+    return it('should verify that child11 was removed', function(done) {
+      return wongo.findById('MockTree', child11._id, function(err, result) {
+        assert.ok(!err);
+        assert.ok(!result);
         return done();
       });
     });

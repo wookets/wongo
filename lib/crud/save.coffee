@@ -31,11 +31,18 @@ exports.save = (_type, document, where, callback) ->
   async.series [
     (next) -> # make sure we are connected to the db
       mongo.ifConnected(next)
+    (next) -> # before validate
+      async.eachSeries schema.middleware.beforeValidate, (func, nextInLoop) ->
+        func(document, schema, nextInLoop)
+      , next
     (next) -> # before save middleware
       async.eachSeries schema.middleware.beforeSave, (func, nextInLoop) ->
         func(document, schema, nextInLoop)
-      , (err) ->
-        next(err)
+      , next
+    (next) -> # right before save middleware (hide some cleanup stuff from user in these methods)
+      async.eachSeries schema.middleware.rightBeforeSave, (func, nextInLoop) ->
+        func(document, schema, nextInLoop)
+      , next
     (next) -> # execute save
       collection = mongo.collection(schema.collectionName)
       if not document._id
@@ -52,7 +59,6 @@ exports.save = (_type, document, where, callback) ->
     (next) -> # run after save middleware array
       async.eachSeries schema.middleware.afterSave, (func, nextInLoop) ->
         func(document, schema, nextInLoop)
-      , (err) ->
-        next(err)
+      , next
   ], (err) ->
     callback(err, document)

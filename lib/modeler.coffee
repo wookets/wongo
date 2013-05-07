@@ -1,5 +1,6 @@
 
 _ = require 'underscore'
+async = require 'async'
 
 hooks = require __dirname + '/hooks'
 mongo = require __dirname + '/mongo'
@@ -19,10 +20,11 @@ exports.schema = (_type, schema) ->
   if not schema.fields or _.isEmpty(schema.fields) then throw new Error('We need to have some sort of schema or whats the point?')
 
   # define collectionName if not defined
+  schema._type = _type
   schema.collectionName ?= _type
 
-  # normalize schema 
-  normalize(schema.fields)
+  # normalize schema
+  normalize(schema)
 
   # apply options
   applyOptions(schema)
@@ -50,7 +52,13 @@ exports.schema = (_type, schema) ->
 # This will recurse the documents and do all subdocuments and arrays
 #
 normalize = (schema) ->
-  for own field, meta of schema
+  schema.indexes ?= []
+  schema.plugins ?= []
+  schema.hooks ?= {}
+  schema.options ?= {}
+
+  # normalize fields
+  for own field, meta of schema.fields
     if not meta then throw new Error('We were expecting ' + field + ' to have proper meta.')
     if _.isArray(meta) # support array properties
       if not meta[0] then throw new Error('We were expecting ' + field + ' to have proper array meta.')
@@ -65,7 +73,7 @@ normalize = (schema) ->
       if meta.type then continue # ignore types already defined
       switch meta
         when String, Number, Boolean, Date
-          schema[field] = {type: meta}
+          schema.fields[field] = {type: meta}
         else
           normalize(meta)
           meta.type = 'SubDoc'
@@ -87,8 +95,15 @@ applyOptions = (schema) ->
 # Add hooks, defaults first (or overrides), then user defined hooks
 #
 setupMiddleware = (schema) ->
-  schema.hooks ?= {}
-  schema.middleware = {beforeSave: [], afterSave: [], beforeFind: [], afterFind: [], beforeRemove: [], afterRemove: []}
+  schema.middleware =
+    beforeValidate: [] # prune, defaults, user defined
+    beforeSave: [] # validate, user defined
+    rightBeforeSave: [] # generate subdoc id, String to OID
+    afterSave: [] # convert OID back to String, user defined
+    beforeFind: []
+    afterFind: []
+    beforeRemove: []
+    afterRemove: []
 
   #
   # Save
@@ -99,14 +114,14 @@ setupMiddleware = (schema) ->
   prune = options.prune if _.isUndefined(prune) # check option defined
   prune = hooks.prune if prune is true # if for whatever reason the user set prune to true, use internal 
   if _.isFunction(prune)
-    schema.middleware.beforeSave.push(prune)
+    schema.middleware.beforeValidate.push(prune)
 
   # apply defaults
   applyDefaults = schema.hooks.applyDefaults
   applyDefaults = options.applyDefaults if _.isUndefined(applyDefaults)
   applyDefaults = hooks.applyDefaults if applyDefaults is true 
   if _.isFunction(applyDefaults)
-    schema.middleware.beforeSave.push(applyDefaults)
+    schema.middleware.beforeValidate.push(applyDefaults)
 
   # validate
   validate = schema.hooks.validate
@@ -115,25 +130,25 @@ setupMiddleware = (schema) ->
   if _.isFunction(validate)
     schema.middleware.beforeSave.push(validate)
 
-  # generate subdoc id
-  generateSubdocIds = schema.hooks.generateSubdocIds
-  generateSubdocIds = options.generateSubdocIds if _.isUndefined(generateSubdocIds)
-  generateSubdocIds = hooks.generateSubdocIds if generateSubdocIds is true
-  if _.isFunction(generateSubdocIds)
-    schema.middleware.beforeSave.push(generateSubdocIds)
-
   # user defined before save
   beforeSave = schema.hooks.beforeSave
   beforeSave = options.beforeSave if _.isUndefined(beforeSave)
   if _.isFunction(beforeSave)
     schema.middleware.beforeSave.push(beforeSave)
 
+  # generate subdoc id
+  generateSubdocIds = schema.hooks.generateSubdocIds
+  generateSubdocIds = options.generateSubdocIds if _.isUndefined(generateSubdocIds)
+  generateSubdocIds = hooks.generateSubdocIds if generateSubdocIds is true
+  if _.isFunction(generateSubdocIds)
+    schema.middleware.rightBeforeSave.push(generateSubdocIds)
+
   # convert strings into objectIds if necessary
   stringizeObjectIDBeforeSave = schema.hooks.stringizeObjectIDBeforeSave
   stringizeObjectIDBeforeSave = options.stringizeObjectID if _.isUndefined(stringizeObjectIDBeforeSave)
   stringizeObjectIDBeforeSave = hooks.stringizeObjectIDBeforeSave if stringizeObjectIDBeforeSave is true
   if _.isFunction(stringizeObjectIDBeforeSave)
-    schema.middleware.beforeSave.push(stringizeObjectIDBeforeSave)
+    schema.middleware.rightBeforeSave.push(stringizeObjectIDBeforeSave)
 
   # execute save
 
@@ -228,12 +243,11 @@ applyPlugins = (schema) ->
 # ensure our indexes as defined on the schema are created
 #
 ensureIndexes = (_type, schema) ->
-  for index in schema.indexes ? []
+  async.forEach schema.indexes, (index, nextInLoop) ->
     mongo.ifConnected () ->
-      if _.isArray(index) 
+      if _.isArray(index)
         mongo.db.ensureIndex(schema.collectionName, index[0], index[1], (err) -> if err then throw err)
       else 
         mongo.db.ensureIndex(schema.collectionName, index, (err) -> if err then throw err)
-
-
+      nextInLoop()
     

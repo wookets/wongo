@@ -9,7 +9,7 @@ module.exports = (schema, options) ->
   schema.fields.modifiedOn = {type: Date, required: true}
   
   # add beforeSave middleware
-  schema.middleware.beforeSave.unshift (document, schema, callback) ->
+  schema.middleware.beforeValidate.push (document, schema, callback) ->
     document.createdOn ?= new Date()
     document.modifiedOn = new Date()
     callback()
