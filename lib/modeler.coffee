@@ -233,13 +233,12 @@ setupMiddleware = (schema) ->
 #
 applyPlugins = (schema) ->
   for plugin in schema.plugins ? []
-    if _.isUndefined(plugin)
-      throw new Error('The plugin defined for ' + schema._type ' is undefined.')
     if _.isArray(plugin) # [function, args]
       plugin[0](schema, plugin[1])
-    else # [function]
+    else if _.isFunction(plugin) # [function]
       plugin(schema)
-
+    else
+      throw new Error('The plugin defined for ' + schema._type ' is incorrectly defined (must be an array or a function).')
 
 #
 # ensure our indexes as defined on the schema are created

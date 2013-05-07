@@ -3,7 +3,7 @@
   "description": "A simple ODM for mongodb",
   "main": "./lib/wongo",
   "author": "wookets",
-  "version": "0.6.20",
+  "version": "0.6.21",
   "repository": {
     "type": "git",
     "url": "http://github.com/wookets/wongo.git"
