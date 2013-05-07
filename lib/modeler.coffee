@@ -238,7 +238,7 @@ applyPlugins = (schema) ->
     else if _.isFunction(plugin) # [function]
       plugin(schema)
     else
-      throw new Error('The plugin defined for ' + schema._type ' is incorrectly defined (must be an array or a function).')
+      throw new Error('The plugin defined for ' + schema._type + ' is incorrectly defined (must be an array or a function).')
 
 #
 # ensure our indexes as defined on the schema are created
