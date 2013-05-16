@@ -9,6 +9,7 @@ wongo.schema 'MockValidation',
     array: [{type: String, required: true}]
     date: {type: Date, required: true}
     enum: {type: String, required: true, enum: ['woof', 'bark', 'meow']}
+    default: {type: String, required: true, enum: ['cave', 'man'], default: 'cave'}
     
 
 describe 'Wongo validation', ->
@@ -102,5 +103,12 @@ describe 'Wongo validation', ->
       assert.ok(err)
       assert.equal(err.message, 'enum must be valid.')
       done()
-  
+
+  it 'should validate defaults are being set', (done) ->
+    vdoc = {name: 'boo', number: 2, boolean: false, array: [], date: new Date, enum: 'woof'}
+    wongo.save 'MockValidation', vdoc, (err, result) ->
+      assert.ok(not err)
+      assert.equal(result.default, 'cave')
+      done()
+
   

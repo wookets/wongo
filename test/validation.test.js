@@ -39,6 +39,12 @@
         type: String,
         required: true,
         "enum": ['woof', 'bark', 'meow']
+      },
+      "default": {
+        type: String,
+        required: true,
+        "enum": ['cave', 'man'],
+        "default": 'cave'
       }
     }
   });
@@ -209,7 +215,7 @@
         return done();
       });
     });
-    return it('should validate enum is of type enum value', function(done) {
+    it('should validate enum is of type enum value', function(done) {
       var vdoc;
       vdoc = {
         name: 'boo',
@@ -222,6 +228,22 @@
       return wongo.save('MockValidation', vdoc, function(err, result) {
         assert.ok(err);
         assert.equal(err.message, 'enum must be valid.');
+        return done();
+      });
+    });
+    return it('should validate defaults are being set', function(done) {
+      var vdoc;
+      vdoc = {
+        name: 'boo',
+        number: 2,
+        boolean: false,
+        array: [],
+        date: new Date,
+        "enum": 'woof'
+      };
+      return wongo.save('MockValidation', vdoc, function(err, result) {
+        assert.ok(!err);
+        assert.equal(result["default"], 'cave');
         return done();
       });
     });

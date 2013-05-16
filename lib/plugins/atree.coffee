@@ -18,8 +18,8 @@ module.exports = (schema, options) ->
   # before save, make sure path and parent match, else throw an exception to the developer
   schema.middleware.beforeValidate.push (document, schema, callback) ->
     document.ancestors ?= []
-    for ancestor in ancestors
-      if _.isNull(ancestors) then return callback('Can not have a null ancestor.')
+    for ancestor in document.ancestors
+      if _.isNull(ancestor) then return callback('Can not have a null ancestor.')
     document.parent = _.last(document.ancestors) # use the ancestors as a book of record to set the parent
     callback()
 

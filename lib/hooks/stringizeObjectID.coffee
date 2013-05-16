@@ -10,7 +10,7 @@ exports.beforeSave = (document, schema, callback) ->
   convert = (doc, fields) -> # inline function to allow us to recurse SubDoc types
     for own property, value of doc
       meta = fields[property]
-      if _.isUndefined(meta) and property isnt '_id' then continue # maybe the user disabled prune
+      if not meta and property isnt '_id' then continue # maybe the user disabled prune
       if _.isArray(meta) # if array, unwrap
         meta = meta[0]
       if property is '_id' or meta.type is ObjectID # convert known ObjectIDs
