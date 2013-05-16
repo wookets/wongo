@@ -16,7 +16,7 @@ module.exports = (document, schema, callback) ->
       else if not meta?.type # check object
         applyDefaults(doc[prop], meta)
       else
-        if not doc[prop] and meta.default
+        if _.isUndefined(doc[prop]) and meta.default
           doc[prop] = meta.default
   applyDefaults(document, schema.fields)
   callback()
