@@ -45,6 +45,11 @@
         required: true,
         "enum": ['cave', 'man'],
         "default": 'cave'
+      },
+      defaultBoolean: {
+        type: Boolean,
+        required: true,
+        "default": false
       }
     }
   });
@@ -231,7 +236,7 @@
         return done();
       });
     });
-    return it('should validate defaults are being set', function(done) {
+    it('should validate defaults are being set', function(done) {
       var vdoc;
       vdoc = {
         name: 'boo',
@@ -244,6 +249,22 @@
       return wongo.save('MockValidation', vdoc, function(err, result) {
         assert.ok(!err);
         assert.equal(result["default"], 'cave');
+        return done();
+      });
+    });
+    return it('should validate default booleans are being set to false', function(done) {
+      var vdoc;
+      vdoc = {
+        name: 'boo',
+        number: 2,
+        boolean: false,
+        array: [],
+        date: new Date,
+        "enum": 'woof'
+      };
+      return wongo.save('MockValidation', vdoc, function(err, result) {
+        assert.ok(!err);
+        assert.equal(result.defaultBoolean, false);
         return done();
       });
     });
