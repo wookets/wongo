@@ -53,7 +53,7 @@ exports.save = (_type, document, where, callback) ->
       else
         where._id = document._id
         delete document._id
-        collection.update where, {$set: document}, {safe: true, w:1}, (err) -> # updates allow partial doc saves
+        collection.update where, {$set: document}, {w:1}, (err) -> # updates allow partial doc saves
           document._id = where._id
           next(err)
     (next) -> # run after save middleware array
