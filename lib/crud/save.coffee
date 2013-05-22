@@ -22,12 +22,18 @@ exports.save = (_type, document, where, callback) ->
   if not document or not _.isObject(document) or _.isEmpty(document) then throw new Error('document required.')
   # add primative support for saving multiple documents
   if _.isArray(document)
-    async.each document, (doc, nextInLoop) ->
-      exports.save(_type, doc, where, nextInLoop)
-    , (err) -> 
-      callback(err, document)
-    return
-  # execute middleware and save
+    saveAll(_type, document, where, callback)
+  else
+    save(_type, document, where, callback)
+
+saveAll = (_type, documents, where, callback) ->
+  async.each documents, (doc, nextInLoop) ->
+    exports.save(_type, doc, where, nextInLoop)
+  , (err) ->
+    callback(err, documents)
+
+save = (_type, document, where, callback) ->
+  schema = modeler.schema(_type)
   async.series [
     (next) -> # make sure we are connected to the db
       mongo.ifConnected(next)
@@ -51,10 +57,11 @@ exports.save = (_type, document, where, callback) ->
           document._id = result[0]._id
           next()
       else
-        where._id = document._id
+        whereX = _.clone(where)
+        whereX._id = document._id
         delete document._id
-        collection.update where, {$set: document}, {w:1}, (err) -> # updates allow partial doc saves
-          document._id = where._id
+        collection.update whereX, {$set: document}, {w:1}, (err) -> # updates allow partial doc saves
+          document._id = whereX._id
           next(err)
     (next) -> # run after save middleware array
       async.eachSeries schema.middleware.afterSave, (func, nextInLoop) ->

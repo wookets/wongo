@@ -15,9 +15,9 @@ exports.beforeSave = (document, schema, callback) ->
         meta = meta[0]
       if property is '_id' or meta.type is ObjectID # convert known ObjectIDs
         if _.isArray(value)
-          document[property] = (new ObjectID(id) for id in value when _.isString(id))
+          doc[property] = (new ObjectID(id) for id in value when _.isString(id))
         else
-          document[property] = new ObjectID(value) if _.isString(value)
+          doc[property] = new ObjectID(value) if _.isString(value)
       else if meta.type is 'SubDoc'
         if _.isArray(value)
           convert(val, meta) for val in value
@@ -27,6 +27,7 @@ exports.beforeSave = (document, schema, callback) ->
   callback()
 
 #
+
 # Convert all ObjectIDs to Strings
 #
 exports.afterSave = (document, schema, callback) ->
