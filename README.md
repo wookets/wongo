@@ -1,3 +1,7 @@
+# Status Update - (6/4/13)
+
+Work on this library has ceased. Mongoose is being used behind the scenes once again. This was a fun project and I have carried over my learnings to a simplified wongo wrapper, but I cannot bring myself to spend time on re-inventing an already decent wheel. Mongoosejs seems to have fixed many of my earlier issues or they became irrelevant. 
+
 # Wongo
 
 Wongo is an ODM-like library intended to simplify working with mongodb. The intent is to have feature parity with mongoosejs, but simplier and cleaner. Part of that simplicity is only supporting three crud methods; save, remove, and find which should cover 99% of use cases. Of course, if you want to get down and dirty, the native mongodb driver is exposed. 
