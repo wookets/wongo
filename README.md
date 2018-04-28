@@ -1,5 +1,7 @@
 # Status Update - (6/4/13)
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/wookets/wongo.svg)](https://greenkeeper.io/)
+
 Work on this library has ceased. Mongoose is being used behind the scenes once again. This was a fun project and I have carried over my learnings to a simplified wongo wrapper, but I cannot bring myself to spend time on re-inventing an already decent wheel. Mongoosejs seems to have fixed many of my earlier issues or they became irrelevant. 
 
 # Wongo
